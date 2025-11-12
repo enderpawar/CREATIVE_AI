@@ -4,6 +4,8 @@ import { useReteAppEditor } from '../hooks/useReteAppEditor';
 import { createNodeByKind, clientToWorld, exportGraph, importGraph } from '../rete/app-editor';
 import { loadLogic as loadLogicFromStorage, loadTheme, saveTheme } from '../utils/logicStorage';
 import { generatePythonCode, generateJupyterNotebook, generatePythonScript } from '../utils/pipelineToCode';
+import CSVDataManager from './CSVDataManager.jsx';
+import GeminiPipelineGenerator from './GeminiPipelineGenerator.jsx';
 
 // ----------------------------------------------------------------
 // LogicEditorPage: 매수 / 매도 로직을 편집하는 컴포넌트
@@ -12,8 +14,6 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
     const toast = useToast();
     const [logic, setLogic] = useState(null);
     const [logicName, setLogicName] = useState('');
-    const [exchange, setExchange] = useState('Upbit');
-    const [stock, setStock] = useState('');
     const buyCanvasRef = useRef(null);
     const sellCanvasRef = useRef(null);
     const [theme, setTheme] = useState('dark');
@@ -88,8 +88,6 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
         } else {
             setLogic(null);
             setLogicName(defaultNewLogicName || '');
-            setExchange('Upbit');
-            setStock('');
         }
     }, [selectedLogicId, defaultNewLogicName]);
 
@@ -213,8 +211,6 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             const payload = {
                 id: selectedLogicId || `logic-${Date.now()}`,
                 name: logicName,
-                exchange: exchange || undefined,
-                stock: stock || undefined,
                 data: updatedLogicData,
             };
 
@@ -306,6 +302,86 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
         toast.success('Python 스크립트가 다운로드되었습니다!');
     }, [buyEditorRef, buyAreaRef, sellEditorRef, sellAreaRef, logicName, toast]);
 
+    // Gemini에서 생성된 파이프라인을 캔버스에 추가
+    const handlePipelineGenerated = useCallback(async (pipeline) => {
+        try {
+            // Buy 캔버스에 파이프라인 추가 (ML 노드는 어느 캔버스든 상관없음)
+            const buyEditor = buyEditorRef.current;
+            const buyArea = buyAreaRef.current;
+            
+            if (!buyEditor || !buyArea) {
+                toast.error('에디터가 준비되지 않았습니다.');
+                return;
+            }
+
+            // 노드 ID와 Rete 노드 객체 매핑
+            const nodeMap = new Map();
+
+            // 1. 모든 노드 생성
+            for (const nodeData of pipeline.nodes) {
+                const node = await createNodeByKind(nodeData.type);
+                
+                if (!node) {
+                    console.error(`노드 타입을 찾을 수 없습니다: ${nodeData.type}`);
+                    continue;
+                }
+
+                // 컨트롤 값 설정
+                if (nodeData.controls) {
+                    for (const [key, value] of Object.entries(nodeData.controls)) {
+                        const control = node.controls[key];
+                        if (control) {
+                            control.setValue(value);
+                        }
+                    }
+                }
+
+                // 노드를 에디터에 추가
+                await buyEditor.addNode(node);
+                
+                // 위치 설정
+                await buyArea.translate(node.id, nodeData.position);
+                
+                // 매핑 저장
+                nodeMap.set(nodeData.id, node);
+            }
+
+            // 2. 연결 생성
+            for (const conn of pipeline.connections) {
+                const sourceNode = nodeMap.get(conn.source);
+                const targetNode = nodeMap.get(conn.target);
+
+                if (!sourceNode || !targetNode) {
+                    console.error(`연결을 생성할 수 없습니다: ${conn.source} -> ${conn.target}`);
+                    continue;
+                }
+
+                const output = sourceNode.outputs[conn.sourceOutput];
+                const input = targetNode.inputs[conn.targetInput];
+
+                if (!output || !input) {
+                    console.error(`소켓을 찾을 수 없습니다: ${conn.sourceOutput} -> ${conn.targetInput}`);
+                    continue;
+                }
+
+                await buyEditor.addConnection({
+                    source: sourceNode.id,
+                    sourceOutput: conn.sourceOutput,
+                    target: targetNode.id,
+                    targetInput: conn.targetInput
+                });
+            }
+
+            // 화면 업데이트
+            await buyArea.area.update();
+            
+            toast.success(`${pipeline.nodes.length}개의 노드가 추가되었습니다!`);
+        } catch (error) {
+            console.error('파이프라인 적용 오류:', error);
+            toast.error('파이프라인을 캔버스에 적용하는 중 오류가 발생했습니다.');
+        }
+    }, [buyEditorRef, buyAreaRef, toast]);
+
   return (
     <div className="w-full max-w-[1900px] h-[100vh] p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl flex flex-col bg-neutral-950 text-gray-200 border border-neutral-800/70">
         {/* 상단 헤더: 로직 이름 수정 및 거래소/종목 선택 + 저장/뒤로가기 버튼 */}
@@ -314,33 +390,11 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 type="text"
                 value={logicName}
                 onChange={(e) => setLogicName(e.target.value)}
-                placeholder="로직 이름을 입력하세요"
+                placeholder="ML 파이프라인 이름을 입력하세요"
                 className="text-2xl font-semibold tracking-tight bg-transparent text-gray-100 border-b border-transparent focus:border-cyan-400/60 outline-none placeholder:text-gray-500"
             />
                         <div className="flex gap-3 items-center">
-                                {/* 거래소/종목 선택: 헤더로 이동 */}
-                                <select
-                                    value={exchange}
-                                    onChange={(e)=>setExchange(e.target.value)}
-                                    className="bg-neutral-900 text-gray-200 border border-neutral-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-                                    title="거래소 선택"
-                                >
-                                    <option value="">거래소 선택</option>
-                                    <option value="Upbit">Upbit</option>
-                                </select>
-                                <select
-                                  value={stock}
-                                  onChange={(e)=>setStock(e.target.value)}
-                                  className="bg-neutral-900 text-gray-200 border border-neutral-700 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400/40"
-                                  title="종목 선택"
-                                >
-                                  <option value="">Coin 선택</option>
-                                  <option value="KRW-BTC">KRW-BTC</option>
-                                  <option value="Etherium">Etherium</option>
-                                  <option value="LiteCoin">LiteCoin</option>
-                                  <option value="Dodge">Dodge</option>
-                                </select>
-                                {/* Light/Dark 토글: 뒤로가기 버튼 왼쪽 */}
+                                {/* Light/Dark 토글 */}
                                 <button
                                     onClick={toggleTheme}
                                     style={{
@@ -379,7 +433,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 <button onClick={onBack} className="px-4 py-2 text-base font-semibold text-gray-200 bg-neutral-800 border border-neutral-700 rounded-lg hover:bg-neutral-700">
                     &larr; 뒤로가기
                 </button>
-                <button onClick={handleSave} className="px-4 py-2 text-base font-semibold text-white bg-cyan-600 rounded-lg hover:bg-cyan-500 disabled:opacity-50 shadow-[0_10px_30px_-10px_rgba(34,211,238,0.5)]" disabled={!logicName || !stock}>
+                <button onClick={handleSave} className="px-4 py-2 text-base font-semibold text-white bg-cyan-600 rounded-lg hover:bg-cyan-500 disabled:opacity-50 shadow-[0_10px_30px_-10px_rgba(34,211,238,0.5)]" disabled={!logicName}>
                     저장하기
                 </button>
             </div>
@@ -501,13 +555,26 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                     </div>
 
             {/* 3. 정보 및 실행 패널 (오른쪽 사이드바) */}
-            <div className="w-1/5 p-4 bg-neutral-900/60 rounded-2xl border border-neutral-800/70 flex flex-col">
-                <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-lg font-semibold text-gray-200">정보</h3>
-                </div>
-                <div className="flex-grow p-2 bg-neutral-900 rounded border border-neutral-800 text-sm text-gray-300 overflow-auto" style={{ maxHeight: '60vh' }}>
-                    <p className="text-gray-400">로직을 저장하여 관리할 수 있습니다.</p>
-                    <p className="mt-2 text-gray-400">왼쪽에서 노드를 드래그하여 캔버스에 추가하세요.</p>
+            <div className="w-1/5 flex flex-col gap-4">
+                {/* Gemini AI 파이프라인 생성기 */}
+                <GeminiPipelineGenerator onPipelineGenerated={handlePipelineGenerated} />
+                
+                {/* CSV 데이터 관리 */}
+                <CSVDataManager onSelectFile={(fileName) => {
+                    console.log('Selected CSV:', fileName);
+                    toast.success(`${fileName} 선택됨`);
+                }} />
+                
+                {/* 정보 패널 */}
+                <div className="p-4 bg-neutral-900/60 rounded-2xl border border-neutral-800/70 flex flex-col">
+                    <div className="flex items-center justify-between mb-2">
+                        <h3 className="text-lg font-semibold text-gray-200">정보</h3>
+                    </div>
+                    <div className="flex-grow p-2 bg-neutral-900 rounded border border-neutral-800 text-sm text-gray-300 overflow-auto" style={{ maxHeight: '30vh' }}>
+                        <p className="text-gray-400">로직을 저장하여 관리할 수 있습니다.</p>
+                        <p className="mt-2 text-gray-400">왼쪽에서 노드를 드래그하여 캔버스에 추가하세요.</p>
+                        <p className="mt-2 text-cyan-400">💡 CSV 파일을 업로드하면 Data Loader 노드에서 사용할 수 있습니다.</p>
+                    </div>
                 </div>
             </div>
         </div>

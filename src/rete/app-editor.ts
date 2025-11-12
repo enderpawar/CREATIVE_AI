@@ -261,8 +261,7 @@ export class DataLoaderNode extends TradeNode {
     constructor() {
         super('데이터 로더')
         this.addOutput('data', new ClassicPreset.Output(numberSocket, '데이터'))
-        this.addControl('fileType', new ClassicPreset.InputControl('text', { initial: 'CSV' }))
-        this.addControl('path', new ClassicPreset.InputControl('text', { initial: '' }))
+        this.addControl('fileName', new ClassicPreset.InputControl('text', { initial: 'data.csv' }))
         this.kind = 'dataLoader'
         this.category = 'ml-source'
     }

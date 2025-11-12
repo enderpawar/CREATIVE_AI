@@ -74,24 +74,24 @@ const AssetPage = ({
       {/* 헤더 카드 */}
       <div className="relative p-6 mb-6 rounded-2xl themed-card border border-neutral-800/70 overflow-hidden">
         <div className="flex items-center justify-between">
-          <h2 className="mb-2 text-2xl font-semibold text-gray-100 tracking-tight">Trade Builder</h2>
+          <h2 className="mb-2 text-2xl font-semibold text-gray-100 tracking-tight">CREATIVE AI</h2>
         </div>
 
         <div className="mb-1 text-sm sm:text-base text-gray-400">
-          총 전략 수: <span className="font-semibold text-cyan-400">{logics.length}</span>
+          총 로직 수: <span className="font-semibold text-cyan-400">{logics.length}</span>
         </div>
       </div>
 
       {/* KPI 카드 4개 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[{
-          title:'총 전략 수', value: String(logics.length||0)
+          title:'총 로직 수', value: String(logics.length||0)
         },{
           title:'실행 중', value: '0'
         },{
-          title:'누적 ROI', value: '0.00%'
+          title:'AI 적중률', value: '0.00%'
         },{
-          title:'오늘 P/L', value: '₩0'
+          title:'생성된 로직 수 ', value: '0'
         }].map((s,idx)=> (
           <div key={idx} className="p-5 rounded-2xl bg-neutral-900/70 border border-neutral-800/70 hover:border-cyan-500/40 transition">
             <div className="text-xs uppercase tracking-wide text-gray-400 mb-2">{s.title}</div>

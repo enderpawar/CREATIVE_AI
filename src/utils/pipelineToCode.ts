@@ -74,17 +74,47 @@ function nodeToCode(node: NodeData, connections: ConnectionData[], _nodeMap: Map
     
     switch (node.kind) {
         case 'dataLoader': {
-            const fileType = node.controls?.fileType?.value || 'CSV'
-            const path = node.controls?.path?.value || 'data.csv'
-            return `# Load Data\n${varName} = pd.read_csv('${path}')  # File type: ${fileType}\nprint(f"Data loaded: {${varName}.shape}")`
+            const fileName = node.controls?.fileName?.value || 'data.csv'
+            
+            // localStorage에서 실제 CSV 데이터 확인
+            const storedData = typeof window !== 'undefined' ? localStorage.getItem(`csv_data_${fileName}`) : null
+            
+            if (storedData) {
+                // 실제 업로드된 CSV 데이터를 Base64로 인코딩하여 포함
+                const base64Content = typeof btoa !== 'undefined' 
+                    ? btoa(unescape(encodeURIComponent(storedData)))
+                    : Buffer.from(storedData).toString('base64')
+                
+                return `# Load Data from uploaded CSV: ${fileName}
+import io
+import base64
+
+# Embedded CSV data (uploaded from browser)
+csv_content_${varName} = base64.b64decode('${base64Content}').decode('utf-8')
+${varName} = pd.read_csv(io.StringIO(csv_content_${varName}))
+print(f"Data loaded from ${fileName}: {${varName}.shape}")
+print("\\nFirst 5 rows:")
+print(${varName}.head())`
+            } else {
+                // 파일 경로만 있는 경우 (기존 방식)
+                return `# Load Data from file
+${varName} = pd.read_csv('${fileName}')
+print(f"Data loaded: {${varName}.shape}")
+print("\\nFirst 5 rows:")
+print(${varName}.head())`
+            }
         }
         
         case 'dataSplit': {
             const ratio = node.controls?.ratio?.value || 0.8
             const inputConn = connections.find(c => c.target === node.id && c.targetInput === 'data')
-            const sourceVar = inputConn ? `step_${inputConn.source.replace(/[^a-zA-Z0-9]/g, '_')}` : 'data'
+            const sourceVar = inputConn ? `step_${inputConn.source.replace(/[^a-zA-Z0-9]/g, '_')}` : 'df'
             
-            return `# Train/Test Split\nX = ${sourceVar}.drop('target', axis=1)  # Adjust 'target' column name\ny = ${sourceVar}['target']\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=${1 - ratio}, random_state=42)\nprint(f"Train size: {len(X_train)}, Test size: {len(X_test)}")`
+            return `# Train/Test Split
+X = ${sourceVar}.drop('target', axis=1)  # Adjust 'target' column name
+y = ${sourceVar}['target']
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=${(1 - ratio).toFixed(2)}, random_state=42)
+print(f"Train size: {{len(X_train)}}, Test size: {{len(X_test)}}")`
         }
         
         case 'scaler': {
