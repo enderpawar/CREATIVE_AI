@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { 
-    generatePipelineFromPrompt, 
+    generatePythonCode, 
     saveGeminiApiKey, 
     getStoredGeminiApiKey,
     removeGeminiApiKey 
@@ -8,13 +8,14 @@ import {
 import { useToast } from './toast/ToastProvider.jsx';
 
 /**
- * Gemini API를 사용한 파이프라인 자동 생성 컴포넌트
+ * Gemini API를 사용한 Python 코드 생성 컴포넌트
  */
-const GeminiPipelineGenerator = ({ onPipelineGenerated }) => {
+const GeminiPipelineGenerator = () => {
     const toast = useToast();
     const [apiKey, setApiKey] = useState('');
     const [hasApiKey, setHasApiKey] = useState(false);
     const [prompt, setPrompt] = useState('');
+    const [generatedCode, setGeneratedCode] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [showApiKeyInput, setShowApiKeyInput] = useState(false);
 
@@ -60,22 +61,23 @@ const GeminiPipelineGenerator = ({ onPipelineGenerated }) => {
         }
 
         setIsGenerating(true);
+        setGeneratedCode('');
         
         try {
-            const pipeline = await generatePipelineFromPrompt(prompt);
-            
-            if (onPipelineGenerated) {
-                onPipelineGenerated(pipeline);
-            }
-            
-            toast.success('파이프라인이 생성되었습니다!');
-            setPrompt(''); // 성공 후 프롬프트 초기화
+            const code = await generatePythonCode(prompt);
+            setGeneratedCode(code);
+            toast.success('코드가 생성되었습니다!');
         } catch (error) {
-            console.error('파이프라인 생성 오류:', error);
-            toast.error(error.message || '파이프라인 생성에 실패했습니다.');
+            console.error('코드 생성 오류:', error);
+            toast.error(error.message || '코드 생성에 실패했습니다.');
         } finally {
             setIsGenerating(false);
         }
+    };
+
+    const handleCopyCode = () => {
+        navigator.clipboard.writeText(generatedCode);
+        toast.success('코드가 클립보드에 복사되었습니다!');
     };
 
     const examplePrompts = [
@@ -102,7 +104,7 @@ const GeminiPipelineGenerator = ({ onPipelineGenerated }) => {
                     fontSize: '18px',
                     color: 'var(--text-primary)'
                 }}>
-                    🤖 AI 파이프라인 생성
+                    🤖 AI Python 코드 생성
                 </h3>
                 {hasApiKey && !showApiKeyInput && (
                     <button
@@ -231,7 +233,7 @@ const GeminiPipelineGenerator = ({ onPipelineGenerated }) => {
                             fontSize: '14px',
                             color: 'var(--text-primary)'
                         }}>
-                            원하는 ML 파이프라인을 설명해주세요
+                            원하는 ML 코드를 설명해주세요
                         </label>
                         <textarea
                             value={prompt}
@@ -306,11 +308,66 @@ const GeminiPipelineGenerator = ({ onPipelineGenerated }) => {
                             border: 'none',
                             borderRadius: '6px',
                             cursor: isGenerating || !prompt.trim() ? 'not-allowed' : 'pointer',
-                            transition: 'background-color 0.2s'
+                            transition: 'background-color 0.2s',
+                            marginBottom: '15px'
                         }}
                     >
-                        {isGenerating ? '🔄 생성 중...' : '✨ AI로 파이프라인 생성하기'}
+                        {isGenerating ? '🔄 생성 중...' : '✨ AI로 코드 생성하기'}
                     </button>
+
+                    {/* 생성된 코드 표시 */}
+                    {generatedCode && (
+                        <div style={{
+                            backgroundColor: 'var(--bg-primary)',
+                            borderRadius: '6px',
+                            overflow: 'hidden',
+                            border: '1px solid var(--border-color)'
+                        }}>
+                            <div style={{
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center',
+                                padding: '10px 15px',
+                                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                borderBottom: '1px solid var(--border-color)'
+                            }}>
+                                <span style={{
+                                    fontSize: '14px',
+                                    fontWeight: '600',
+                                    color: 'var(--text-primary)'
+                                }}>
+                                    생성된 Python 코드
+                                </span>
+                                <button
+                                    onClick={handleCopyCode}
+                                    style={{
+                                        padding: '6px 12px',
+                                        fontSize: '12px',
+                                        backgroundColor: '#3b82f6',
+                                        color: 'white',
+                                        border: 'none',
+                                        borderRadius: '4px',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    📋 복사
+                                </button>
+                            </div>
+                            <pre style={{
+                                margin: 0,
+                                padding: '15px',
+                                fontSize: '13px',
+                                fontFamily: 'Consolas, Monaco, "Courier New", monospace',
+                                color: 'var(--text-primary)',
+                                backgroundColor: '#1e1e1e',
+                                overflow: 'auto',
+                                maxHeight: '500px',
+                                lineHeight: '1.5'
+                            }}>
+                                <code>{generatedCode}</code>
+                            </pre>
+                        </div>
+                    )}
                 </>
             )}
         </div>

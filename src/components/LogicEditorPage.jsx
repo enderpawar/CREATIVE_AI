@@ -8,7 +8,7 @@ import CSVDataManager from './CSVDataManager.jsx';
 import GeminiPipelineGenerator from './GeminiPipelineGenerator.jsx';
 
 // ----------------------------------------------------------------
-// LogicEditorPage: 매수 / 매도 로직을 편집하는 컴포넌트
+// LogicEditorPage: ML 파이프라인을 편집하는 컴포넌트
 // ----------------------------------------------------------------
 const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName = '' }) => {
     const toast = useToast();
@@ -78,8 +78,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 if (current) {
                     setLogic(current);
                     setLogicName(current.name || '');
-                    setExchange(current.exchange || 'Upbit');
-                    setStock(current.stock || '');
+                    // exchange, stock 제거됨
                     return;
                 }
             } catch (e) {
@@ -137,8 +136,6 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             const raw = (dt.getData('application/x-rete-node') || dt.getData('text/plain') || '').trim();
             if (!raw) return null;
             const allowed = [
-                // Original nodes
-                'const','currentPrice','highestPrice','rsi','roi','sma','compare','logicOp','buy','sell','rl','branch',
                 // ML Pipeline nodes
                 'dataLoader','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'
             ];
@@ -155,27 +152,10 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             const kind = extractKind(e.dataTransfer);
             if (!kind) return;
             const allowed = [
-                // Original nodes
-                'const','currentPrice','highestPrice','rsi','roi','sma','compare','logicOp','buy','sell','rl','branch',
                 // ML Pipeline nodes
                 'dataLoader','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'
             ];
             if (!allowed.includes(kind)) { console.warn('드롭된 kind 무시:', kind); return; }
-
-            // ML 노드는 그래프 제한 없음 (어느 캔버스든 사용 가능)
-            const mlNodes = ['dataLoader','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'];
-            const isMLNode = mlNodes.includes(kind);
-
-            // 그래프별 제한 규칙 적용 (ML 노드 제외)
-            if (!isMLNode) {
-                if (which === 'buy') {
-                    if (kind === 'sell') { toast.error('[드롭 차단] Sell 노드는 Buy 그래프에 추가 불가'); return; }
-                    if (kind === 'roi') { toast.error('[드롭 차단] ROI 노드는 Buy 그래프에 추가 불가'); return; }
-                }
-                if (which === 'sell') {
-                    if (kind === 'buy') { toast.error('[드롭 차단] Buy 노드는 Sell 그래프에 추가 불가'); return; }
-                }
-            }
 
             const editorRef = which === 'buy' ? buyEditorRef : sellEditorRef;
             const areaRef = which === 'buy' ? buyAreaRef : sellAreaRef;
@@ -346,30 +326,104 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 nodeMap.set(nodeData.id, node);
             }
 
+
             // 2. 연결 생성
-            for (const conn of pipeline.connections) {
-                const sourceNode = nodeMap.get(conn.source);
-                const targetNode = nodeMap.get(conn.target);
-
-                if (!sourceNode || !targetNode) {
-                    console.error(`연결을 생성할 수 없습니다: ${conn.source} -> ${conn.target}`);
-                    continue;
+            const connections = Array.isArray(pipeline.connections) ? pipeline.connections : [];
+            console.log('Pipeline connections:', connections);
+            console.log('Node map:', nodeMap);
+            
+            // 기존 연결 확인 함수
+            const connectionExists = (srcId, srcOut, tgtId, tgtIn) => {
+                const existingConns = buyEditor.getConnections();
+                return existingConns.some(conn => 
+                    conn.source === srcId && 
+                    conn.sourceOutput === srcOut && 
+                    conn.target === tgtId && 
+                    conn.targetInput === tgtIn
+                );
+            };
+            
+            if (connections.length > 0) {
+                console.log('Creating connections from pipeline...');
+                for (const conn of connections) {
+                    const sourceNode = nodeMap.get(conn.source);
+                    const targetNode = nodeMap.get(conn.target);
+                    
+                    if (!sourceNode || !targetNode) {
+                        console.error(`노드를 찾을 수 없습니다: ${conn.source} -> ${conn.target}`);
+                        continue;
+                    }
+                    
+                    console.log(`Source node (${conn.source}) outputs:`, Object.keys(sourceNode.outputs));
+                    console.log(`Target node (${conn.target}) inputs:`, Object.keys(targetNode.inputs));
+                    console.log(`Trying to connect: ${conn.sourceOutput} -> ${conn.targetInput}`);
+                    
+                    // 정확한 소켓 이름 찾기
+                    const outputKey = Object.keys(sourceNode.outputs).find(k => 
+                        k.toLowerCase() === conn.sourceOutput.toLowerCase()
+                    );
+                    const inputKey = Object.keys(targetNode.inputs).find(k => 
+                        k.toLowerCase() === conn.targetInput.toLowerCase()
+                    );
+                    
+                    if (!outputKey || !inputKey) {
+                        console.error(`소켓을 찾을 수 없습니다: ${conn.sourceOutput} (${outputKey}) -> ${conn.targetInput} (${inputKey})`);
+                        continue;
+                    }
+                    
+                    // 중복 연결 체크
+                    if (connectionExists(sourceNode.id, outputKey, targetNode.id, inputKey)) {
+                        console.warn(`⚠️ Connection already exists: ${sourceNode.label} -> ${targetNode.label}`);
+                        continue;
+                    }
+                    
+                    try {
+                        await buyEditor.addConnection({
+                            source: sourceNode.id,
+                            sourceOutput: outputKey,
+                            target: targetNode.id,
+                            targetInput: inputKey
+                        });
+                        console.log(`✅ Connected: ${sourceNode.label} (${outputKey}) -> ${targetNode.label} (${inputKey})`);
+                    } catch (err) {
+                        console.error('Connection error:', err);
+                    }
                 }
-
-                const output = sourceNode.outputs[conn.sourceOutput];
-                const input = targetNode.inputs[conn.targetInput];
-
-                if (!output || !input) {
-                    console.error(`소켓을 찾을 수 없습니다: ${conn.sourceOutput} -> ${conn.targetInput}`);
-                    continue;
+            } else {
+                // connections가 없으면 노드 순서대로 자동 연결 (출력→입력 1:1)
+                console.log('No connections provided, auto-connecting nodes...');
+                const nodeArr = Array.from(nodeMap.values());
+                for (let i = 0; i < nodeArr.length - 1; i++) {
+                    const src = nodeArr[i];
+                    const dst = nodeArr[i + 1];
+                    
+                    console.log(`Source node outputs:`, Object.keys(src.outputs));
+                    console.log(`Target node inputs:`, Object.keys(dst.inputs));
+                    
+                    // 첫 번째 출력, 첫 번째 입력 자동 연결
+                    const srcOut = Object.keys(src.outputs)[0];
+                    const dstIn = Object.keys(dst.inputs)[0];
+                    
+                    if (srcOut && dstIn) {
+                        // 중복 연결 체크
+                        if (connectionExists(src.id, srcOut, dst.id, dstIn)) {
+                            console.warn(`⚠️ Auto-connection already exists: ${src.label} -> ${dst.label}`);
+                            continue;
+                        }
+                        
+                        try {
+                            await buyEditor.addConnection({
+                                source: src.id,
+                                sourceOutput: srcOut,
+                                target: dst.id,
+                                targetInput: dstIn
+                            });
+                            console.log(`✅ Auto-connected: ${src.label} (${srcOut}) -> ${dst.label} (${dstIn})`);
+                        } catch (err) {
+                            console.error('Auto-connection error:', err);
+                        }
+                    }
                 }
-
-                await buyEditor.addConnection({
-                    source: sourceNode.id,
-                    sourceOutput: conn.sourceOutput,
-                    target: targetNode.id,
-                    targetInput: conn.targetInput
-                });
             }
 
             // 화면 업데이트
@@ -556,8 +610,8 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
 
             {/* 3. 정보 및 실행 패널 (오른쪽 사이드바) */}
             <div className="w-1/5 flex flex-col gap-4">
-                {/* Gemini AI 파이프라인 생성기 */}
-                <GeminiPipelineGenerator onPipelineGenerated={handlePipelineGenerated} />
+                {/* Gemini AI Python 코드 생성기 */}
+                <GeminiPipelineGenerator />
                 
                 {/* CSV 데이터 관리 */}
                 <CSVDataManager onSelectFile={(fileName) => {

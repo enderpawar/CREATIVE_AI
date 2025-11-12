@@ -1,109 +1,77 @@
-// Gemini API 키는 환경변수나 localStorage에서 가져옵니다
+// Gemini API를 사용하여 Python 코드 생성
+
 const getApiKey = (): string | null => {
-    // 환경변수에서 먼저 확인
     const envKey = import.meta.env.VITE_GEMINI_API_KEY;
     if (envKey) return envKey;
-    
-    // localStorage에서 확인
     return localStorage.getItem('gemini_api_key');
 };
 
-export interface PipelineNode {
-    type: string;
-    id: string;
-    position: { x: number; y: number };
-    controls?: Record<string, any>;
-}
-
-export interface PipelineConnection {
-    source: string;
-    sourceOutput: string;
-    target: string;
-    targetInput: string;
-}
-
-export interface GeneratedPipeline {
-    nodes: PipelineNode[];
-    connections: PipelineConnection[];
-}
-
 /**
- * Gemini API를 사용하여 사용자 프롬프트로부터 ML 파이프라인을 생성합니다.
+ * Gemini API를 사용하여 사용자 프롬프트로부터 Python 코드를 생성합니다.
  */
-export async function generatePipelineFromPrompt(
-    userPrompt: string
-): Promise<GeneratedPipeline> {
+export async function generatePythonCode(userPrompt: string): Promise<string> {
     const apiKey = getApiKey();
-    
-    if (!apiKey) {
-        throw new Error('Gemini API 키가 설정되지 않았습니다. API 키를 먼저 설정해주세요.');
-    }
+    if (!apiKey) throw new Error('API 키가 설정되지 않았습니다.');
 
-    // REST API 직접 호출 방식으로 변경 (SDK의 v1beta 문제 해결)
-    // Gemini 2.0 Flash 사용 (최신 모델)
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    
+    const systemPrompt = `당신은 머신러닝 전문가입니다. 사용자의 요구사항에 맞는 scikit-learn 기반 Python 코드를 생성해주세요.
 
-    // 프롬프트 엔지니어링: ML 파이프라인 노드 정의를 포함한 시스템 프롬프트
-    const systemPrompt = `당신은 머신러닝 파이프라인 설계 전문가입니다. 사용자의 요구사항을 분석하여 적절한 노드 그래프를 생성해야 합니다.
+중요한 규칙:
+1. 완전하고 실행 가능한 코드를 작성하세요
+2. 필요한 모든 import 문을 포함하세요
+3. 데이터 로딩, 전처리, 모델 훈련, 평가를 모두 포함하세요
+4. 주석을 포함하여 코드를 설명하세요
+5. 반드시 \`\`\`python 코드 블록으로 감싸주세요
 
-사용 가능한 노드 타입:
-1. dataLoader - CSV 데이터를 로드 (controls: { fileName: string })
-2. dataSplit - 데이터를 train/test로 분할 (controls: { test_size: number, random_state: number })
-3. scaler - 데이터 스케일링 (controls: { method: "standard" | "minmax" | "robust" })
-4. featureSelection - 특성 선택 (controls: { method: "variance" | "kbest" | "rfe", k: number })
-5. classifier - 분류 모델 (controls: { algorithm: "logistic" | "randomForest" | "svm" | "knn" | "gradientBoosting" })
-6. regressor - 회귀 모델 (controls: { algorithm: "linear" | "ridge" | "lasso" | "randomForest" | "svr" })
-7. neuralNet - 신경망 (controls: { layers: string, activation: string, optimizer: string, epochs: number })
-8. evaluate - 모델 평가 (controls: { metrics: string })
-9. predict - 예측 수행
-10. hyperparamTune - 하이퍼파라미터 튜닝 (controls: { method: "grid" | "random", cv: number })
+예시 출력 형식:
+\`\`\`python
+# 필요한 라이브러리 import
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
 
-노드 간 연결 규칙:
-- dataLoader → dataSplit (output: "data" → input: "data")
-- dataSplit → scaler (output: "X_train" → input: "data")
-- scaler → classifier/regressor/neuralNet (output: "scaled" → input: "X_train")
-- dataSplit → classifier/regressor/neuralNet (output: "y_train" → input: "y_train")
-- classifier/regressor/neuralNet → evaluate (output: "model" → input: "model")
-- dataSplit → evaluate (output: "X_test" → input: "X_test", output: "y_test" → input: "y_test")
+# 데이터 로딩
+df = pd.read_csv('data.csv')
 
-응답 형식 (JSON만 출력):
-{
-    "nodes": [
-        {
-            "type": "dataLoader",
-            "id": "node_1",
-            "position": { "x": 100, "y": 100 },
-            "controls": { "fileName": "data.csv" }
-        },
-        ...
-    ],
-    "connections": [
-        {
-            "source": "node_1",
-            "sourceOutput": "data",
-            "target": "node_2",
-            "targetInput": "data"
-        },
-        ...
-    ]
-}
+# 특성과 타겟 분리
+X = df.drop('target', axis=1)
+y = df['target']
 
-중요: 반드시 유효한 JSON만 출력하고, 설명이나 추가 텍스트는 포함하지 마세요.`;
+# 훈련/테스트 데이터 분할
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
 
-    const fullPrompt = `${systemPrompt}\n\n사용자 요구사항: ${userPrompt}\n\n위 요구사항을 분석하여 적절한 ML 파이프라인 JSON을 생성하세요.`;
+# 정규화
+scaler = StandardScaler()
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
+
+# 모델 훈련
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train_scaled, y_train)
+
+# 예측 및 평가
+y_pred = model.predict(X_test_scaled)
+accuracy = accuracy_score(y_test, y_pred)
+print(f'Accuracy: {accuracy:.4f}')
+print(classification_report(y_test, y_pred))
+\`\`\`
+
+사용자 요구사항: ${userPrompt}`;
 
     try {
         const response = await fetch(API_URL, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                contents: [{
-                    parts: [{
-                        text: fullPrompt
-                    }]
-                }]
+                contents: [{ parts: [{ text: systemPrompt }] }],
+                generationConfig: {
+                    temperature: 0.7,
+                    maxOutputTokens: 2048,
+                }
             })
         });
 
@@ -113,33 +81,19 @@ export async function generatePipelineFromPrompt(
         }
 
         const data = await response.json();
-        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
         
-        if (!text) {
-            throw new Error('API 응답에서 텍스트를 찾을 수 없습니다.');
+        // Python 코드 블록 추출
+        const match = text.match(/```python\n([\s\S]+?)\n```/);
+        if (match) {
+            return match[1].trim();
         }
         
-        // JSON 추출 (코드 블록이나 추가 텍스트 제거)
-        let jsonText = text.trim();
-        
-        // 마크다운 코드 블록 제거
-        if (jsonText.startsWith('```json')) {
-            jsonText = jsonText.replace(/^```json\n/, '').replace(/\n```$/, '');
-        } else if (jsonText.startsWith('```')) {
-            jsonText = jsonText.replace(/^```\n/, '').replace(/\n```$/, '');
-        }
-        
-        const pipeline = JSON.parse(jsonText) as GeneratedPipeline;
-        
-        // 기본 검증
-        if (!pipeline.nodes || !Array.isArray(pipeline.nodes)) {
-            throw new Error('잘못된 파이프라인 형식: nodes 배열이 없습니다.');
-        }
-        
-        return pipeline;
+        // 코드 블록이 없으면 전체 텍스트 반환
+        return text.trim();
     } catch (error) {
         console.error('Gemini API 오류:', error);
-        throw new Error(`파이프라인 생성 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+        throw new Error(`코드 생성 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
     }
 }
 
