@@ -1,5 +1,3 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-
 // Gemini API 키는 환경변수나 localStorage에서 가져옵니다
 const getApiKey = (): string | null => {
     // 환경변수에서 먼저 확인
@@ -41,8 +39,9 @@ export async function generatePipelineFromPrompt(
         throw new Error('Gemini API 키가 설정되지 않았습니다. API 키를 먼저 설정해주세요.');
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-pro' });
+    // REST API 직접 호출 방식으로 변경 (SDK의 v1beta 문제 해결)
+    // Gemini 2.0 Flash 사용 (최신 모델)
+    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
     // 프롬프트 엔지니어링: ML 파이프라인 노드 정의를 포함한 시스템 프롬프트
     const systemPrompt = `당신은 머신러닝 파이프라인 설계 전문가입니다. 사용자의 요구사항을 분석하여 적절한 노드 그래프를 생성해야 합니다.
@@ -94,9 +93,31 @@ export async function generatePipelineFromPrompt(
     const fullPrompt = `${systemPrompt}\n\n사용자 요구사항: ${userPrompt}\n\n위 요구사항을 분석하여 적절한 ML 파이프라인 JSON을 생성하세요.`;
 
     try {
-        const result = await model.generateContent(fullPrompt);
-        const response = await result.response;
-        const text = response.text();
+        const response = await fetch(API_URL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                contents: [{
+                    parts: [{
+                        text: fullPrompt
+                    }]
+                }]
+            })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(`API 오류: ${errorData.error?.message || response.statusText}`);
+        }
+
+        const data = await response.json();
+        const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        
+        if (!text) {
+            throw new Error('API 응답에서 텍스트를 찾을 수 없습니다.');
+        }
         
         // JSON 추출 (코드 블록이나 추가 텍스트 제거)
         let jsonText = text.trim();
