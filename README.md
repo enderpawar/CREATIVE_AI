@@ -55,6 +55,7 @@ VITE_GEMINI_API_KEY=your_api_key_here
 - [노드 타입 소개](./INTRODUCTION_NODE.md)
 - [코드 생성 원리](./CODE_GENERATION_EXPLAINED.md)
 - [Gemini AI 자동 생성](./GEMINI_AI_GUIDE.md)
+- [점수 예측 예제](./SCORE_PREDICTION_GUIDE.md) 🆕
 
 ## 🎯 사용 가능한 노드
 
@@ -98,7 +99,39 @@ VITE_GEMINI_API_KEY=your_api_key_here
 - **Python Script**: 실행 가능한 .py 파일
 - **미리보기**: 코드 확인 후 복사 가능
 
+## 📂 예제 파일
+
+프로젝트에는 다양한 실행 가능한 예제가 포함되어 있습니다:
+
+- **`class_score_predict_example.py`** 🆕 - 중간고사 점수로 기말고사 점수 예측
+  - Linear Regression 사용
+  - 회귀 평가 지표 (R², MAE, MSE, RMSE)
+  - 시각화 및 대화형 예측 예제
+  - 자세한 내용: [점수 예측 가이드](./SCORE_PREDICTION_GUIDE.md)
+
+- **`demo_real_world_example.py`** - 고객 이탈 예측 시나리오
+  - RandomForest & Logistic Regression 비교
+  - 다중 특성 분석
+  - 특성 중요도 분석
+
+- **`test_generated_code.py`** - Iris 데이터셋 분류
+  - Pipeline 검증용 기본 예제
+  - StandardScaler + RandomForest
+
+```bash
+# 예제 실행 방법
+python3 class_score_predict_example.py
+python3 demo_real_world_example.py
+python3 test_generated_code.py
+```
+
 ## 🌟 주요 업데이트
+
+### v2.1 - 회귀 분석 개선 🆕
+- 회귀 모델 자동 감지 및 적절한 평가 지표 사용
+- R², MAE, MSE, RMSE 평가 지표 추가
+- 대화형 예측 예제 코드 자동 생성
+- 점수 예측 완전 예제 및 가이드 추가
 
 ### v2.0 - AI 자동 생성
 - Gemini AI 통합
