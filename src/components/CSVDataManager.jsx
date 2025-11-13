@@ -1,5 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { loadCSVFile, saveCSVData, listStoredCSVFiles, deleteStoredCSV, validateCSV } from '../utils/csvHandler';
+import { loadCSVFile, saveCSVData, listStoredCSVFiles, deleteStoredCSV, validateCSV, loadStoredCSV } from '../utils/csvHandler';
 import { useToast } from './toast/ToastProvider';
 
 const CSVDataManager = ({ onSelectFile, theme = 'dark' }) => {
@@ -98,10 +98,60 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark' }) => {
 
     const handleSelectFile = useCallback((fileName) => {
         setSelectedFile(fileName);
+        
+        // localStorage에서 파일 내용 로드하여 미리보기 생성
+        const content = loadStoredCSV(fileName);
+        if (content) {
+            try {
+                const lines = content.split('\n').filter(line => line.trim());
+                
+                // CSV 파싱
+                const rows = lines.map(line => {
+                    const result = [];
+                    let current = '';
+                    let inQuotes = false;
+                    
+                    for (let i = 0; i < line.length; i++) {
+                        const char = line[i];
+                        if (char === '"') {
+                            inQuotes = !inQuotes;
+                        } else if (char === ',' && !inQuotes) {
+                            result.push(current.trim());
+                            current = '';
+                        } else {
+                            current += char;
+                        }
+                    }
+                    result.push(current.trim());
+                    return result;
+                });
+                
+                const previewData = rows.slice(0, 10);
+                const columns = rows[0]?.length || 0;
+                
+                setPreview({
+                    fileName,
+                    content,
+                    rows: rows.length,
+                    columns,
+                    preview: previewData
+                });
+                
+                toast.success(`${fileName} 선택됨 (${rows.length}행 × ${columns}열)`);
+            } catch (error) {
+                console.error('미리보기 생성 오류:', error);
+                toast.error('파일 미리보기 생성 실패');
+                setPreview(null);
+            }
+        } else {
+            toast.error('파일을 찾을 수 없습니다');
+            setPreview(null);
+        }
+        
         if (onSelectFile) {
             onSelectFile(fileName);
         }
-    }, [onSelectFile]);
+    }, [onSelectFile, toast]);
 
     return (
         <div className={`csv-data-manager p-4 ${c.bg} rounded-2xl border ${c.border}`}>
