@@ -1,13 +1,21 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { loadCSVFile, saveCSVData, listStoredCSVFiles, deleteStoredCSV, validateCSV, loadStoredCSV } from '../utils/csvHandler';
 import { useToast } from './toast/ToastProvider';
 
 const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
     const toast = useToast();
-    const [uploadedFiles, setUploadedFiles] = useState(listStoredCSVFiles(logicId));
+    const [uploadedFiles, setUploadedFiles] = useState([]);
     const [selectedFile, setSelectedFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [showUploader, setShowUploader] = useState(false);
+
+    // logicId가 변경될 때마다 파일 목록 새로고침
+    useEffect(() => {
+        if (logicId) {
+            const files = listStoredCSVFiles(logicId);
+            setUploadedFiles(files);
+        }
+    }, [logicId]);
 
     // 테마에 따른 색상 정의
     const colors = {
@@ -74,6 +82,11 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
             
             toast.success(`${csvData.fileName} 업로드 완료! (${csvData.rows}행 × ${csvData.columns}열)`);
             
+            // 커스텀 이벤트 발생 - DataLoader 노드가 파일 목록을 업데이트하도록
+            window.dispatchEvent(new CustomEvent('csv-files-updated', { 
+                detail: { logicId, files: listStoredCSVFiles(logicId) } 
+            }));
+            
             // 부모 컴포넌트에 알림
             if (onSelectFile) {
                 onSelectFile(csvData.fileName);
@@ -87,12 +100,18 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
     const handleDeleteFile = useCallback((fileName) => {
         if (confirm(`${fileName}을(를) 삭제하시겠습니까?`)) {
             deleteStoredCSV(fileName, logicId);
-            setUploadedFiles(listStoredCSVFiles(logicId));
+            const updatedFiles = listStoredCSVFiles(logicId);
+            setUploadedFiles(updatedFiles);
             if (selectedFile === fileName) {
                 setSelectedFile(null);
                 setPreview(null);
             }
             toast.success('파일이 삭제되었습니다');
+            
+            // 커스텀 이벤트 발생
+            window.dispatchEvent(new CustomEvent('csv-files-updated', { 
+                detail: { logicId, files: updatedFiles } 
+            }));
         }
     }, [selectedFile, toast, logicId]);
 

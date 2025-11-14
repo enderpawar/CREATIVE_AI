@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from './toast/ToastProvider.jsx';
 import { useReteAppEditor } from '../hooks/useReteAppEditor';
-import { createNodeByKind, clientToWorld, exportGraph, importGraph } from '../rete/app-editor';
+import { createNodeByKind, clientToWorld, exportGraph, importGraph, setCurrentLogicId } from '../rete/app-editor';
 import { loadLogic as loadLogicFromStorage } from '../utils/logicStorage';
 import { generatePythonCode, generateJupyterNotebook, generatePythonScript } from '../utils/pipelineToCode';
 import { enhanceCodeWithAI } from '../utils/geminiPipeline';
@@ -137,7 +137,8 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 if (current) {
                     setLogic(current);
                     setLogicName(current.name || '');
-                    // exchange, stock 제거됨
+                    // Rete 에디터에 현재 로직 ID 설정
+                    setCurrentLogicId(current.id);
                     return;
                 }
             } catch (e) {
@@ -146,6 +147,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
         } else {
             setLogic(null);
             setLogicName(defaultNewLogicName || '');
+            setCurrentLogicId(undefined);
         }
     }, [selectedLogicId, defaultNewLogicName]);
 

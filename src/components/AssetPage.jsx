@@ -160,12 +160,12 @@ const AssetPage = ({
         <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
         
         {/* 메인 콘텐츠 */}
-        <div className="relative z-10 max-w-4xl mx-auto text-center">
-          {/* CREATIVE AI 로고 */}
-          <div className="flex items-center justify-center gap-4 mb-8">
-            <div className="w-16 h-16 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-500 rounded-2xl flex items-center justify-center shadow-2xl shadow-cyan-500/40">
+        <div className="relative z-10 max-w-5xl mx-auto text-center">
+          {/* CREATIVE AI 로고 - 크기 증가 */}
+          <div className="flex items-center justify-center gap-6 mb-12">
+            <div className="w-24 h-24 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-500 rounded-3xl flex items-center justify-center shadow-2xl shadow-cyan-500/50">
               {/* ML 로고 */}
-              <svg viewBox="0 0 100 100" className="w-10 h-10">
+              <svg viewBox="0 0 100 100" className="w-16 h-16">
                 {/* 노드 연결 */}
                 <ellipse cx="50" cy="50" rx="35" ry="20" fill="none" stroke="#67e8f9" strokeWidth="2" opacity="0.6"/>
                 {/* 원형 노드 */}
@@ -178,7 +178,7 @@ const AssetPage = ({
                 <text x="50" y="82" fontSize="16" fill="white" textAnchor="middle" fontWeight="bold">∞</text>
               </svg>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent tracking-tight">
+            <h1 className="text-6xl md:text-7xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent tracking-tight">
               CREATIVE AI
             </h1>
           </div>

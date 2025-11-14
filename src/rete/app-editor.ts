@@ -14,6 +14,14 @@ import { addCustomBackground } from '../customization/custom-background'
 import { listStoredCSVFiles } from '../utils/csvHandler'
 import '../customization/background.css'
 
+// 현재 로직 ID를 저장하는 전역 변수
+let currentLogicId: string | undefined = undefined
+
+// logicId를 설정하는 함수 (외부에서 호출)
+export function setCurrentLogicId(logicId: string | undefined) {
+    currentLogicId = logicId
+}
+
 // -------------------- 타입 선언/유틸 --------------------
 export type NodeKind =
     // ML Pipeline Nodes
@@ -60,12 +68,41 @@ const numberSocket = new ClassicPreset.Socket('number') // 숫자 값 전달
 // -------------------- ML Pipeline Nodes --------------------
 
 export class DataLoaderNode extends TradeNode {
+    private updateFilesListener: ((event: Event) => void) | null = null
+
     constructor() {
         super('Data Loader')
         this.addOutput('data', new ClassicPreset.Output(numberSocket, '데이터'))
         
+        // 초기 파일 목록 로드
+        this.updateFileControl()
+        
+        // CSV 파일 업데이트 이벤트 리스너 등록
+        this.updateFilesListener = ((event: CustomEvent) => {
+            const { logicId } = event.detail
+            // 현재 로직 ID와 일치하는 경우에만 업데이트
+            if (logicId === currentLogicId) {
+                this.updateFileControl()
+            }
+        }) as (event: Event) => void
+        
+        window.addEventListener('csv-files-updated', this.updateFilesListener)
+        
+        this.kind = 'dataLoader'
+        this.category = 'ml-source'
+        this._controlHints = {
+            fileName: { label: '데이터 파일', title: 'CSV 파일을 선택하거나 경로를 입력하세요' }
+        }
+    }
+
+    private updateFileControl() {
+        // 기존 컨트롤 제거
+        if (this.controls.fileName) {
+            delete this.controls.fileName
+        }
+
         // localStorage에서 업로드된 CSV 파일 목록 가져오기
-        const uploadedFiles = listStoredCSVFiles()
+        const uploadedFiles = listStoredCSVFiles(currentLogicId)
         
         if (uploadedFiles.length > 0) {
             // 업로드된 파일이 있으면 드롭다운으로 선택
@@ -81,11 +118,12 @@ export class DataLoaderNode extends TradeNode {
             // 업로드된 파일이 없으면 텍스트 입력
             this.addControl('fileName', new ClassicPreset.InputControl('text', { initial: 'data.csv' }))
         }
-        
-        this.kind = 'dataLoader'
-        this.category = 'ml-source'
-        this._controlHints = {
-            fileName: { label: '데이터 파일', title: 'CSV 파일을 선택하거나 경로를 입력하세요' }
+    }
+
+    // 노드가 제거될 때 이벤트 리스너 정리
+    destroy() {
+        if (this.updateFilesListener) {
+            window.removeEventListener('csv-files-updated', this.updateFilesListener)
         }
     }
 }
@@ -290,11 +328,15 @@ export async function createAppEditor(container: HTMLElement): Promise<{
 
     // (과거 DOM 치환형 드롭다운 유틸은 제거되었습니다)
 
-    // addNode 오버라이드: select 변환 적용
+    // addNode 오버라이드: select 변환 적용 및 노드 렌더링 강제
     const originalAddNode = editor.addNode.bind(editor)
         ; (editor as any).addNode = async (node: TradeNode) => {
             const res = await originalAddNode(node)
             applySelectEnhancements(node)
+            
+            // 노드 추가 후 영역 업데이트를 강제하여 렌더링 확인
+            await area.update('node', node.id)
+            
             return res
         }
 
