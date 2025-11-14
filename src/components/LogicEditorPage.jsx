@@ -278,85 +278,32 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
         }
     };
 
-    // Python 코드 생성 및 미리보기
-    const handleGenerateCode = useCallback(() => {
-        try {
-            const editor = editorRef.current;
-            const area = areaRef.current;
-
-            const graph = editor && area ? exportGraph(editor, area) : { nodes: [], connections: [] };
-
-            const code = generatePythonCode(graph);
-            setGeneratedCode(code);
-            
-            // 모달 열 때 저장된 개선 코드가 있으면 AI 코드 보기, 없으면 노드 기반 코드 보기
-            if (selectedLogicId) {
-                const savedEnhanced = localStorage.getItem(`enhanced_code_${selectedLogicId}`);
-                setShowEnhancedCode(!!savedEnhanced);
-            } else {
-                setShowEnhancedCode(false);
-            }
-            
-            setShowCodePreview(true);
-        } catch (error) {
-            if (error.name === 'PipelineValidationError') {
-                toast.error(error.message);
-            } else {
-                toast.error('코드 생성 중 오류가 발생했습니다.');
-                console.error('Code generation error:', error);
-            }
-        }
-    }, [editorRef, areaRef, selectedLogicId, toast]);
-
-    // AI로 코드 개선하기
-    const handleEnhanceCode = useCallback(async () => {
-        if (!userIntent.trim()) {
-            setShowIntentInput(true);
-            toast.error('코드의 목적을 입력해주세요.');
+    // 코드 생성 (AI 개선 기능 제거됨)
+    const handleGenerateCode = useCallback(async () => {
+        const editor = editorRef.current;
+        if (!editor) {
+            toast.error('에디터가 초기화되지 않았습니다.');
             return;
         }
 
-        setIsEnhancing(true);
         try {
-            // 코드가 없으면 먼저 생성
-            let codeToEnhance = generatedCode;
-            if (!codeToEnhance) {
-                const editor = editorRef.current;
-                if (!editor) {
-                    toast.error('에디터가 초기화되지 않았습니다.');
-                    return;
-                }
-
-                const graph = exportGraph(editor, areaRef.current);
-                const validationErrors = validatePipeline(graph);
-                
-                if (validationErrors.length > 0) {
-                    toast.error(validationErrors.join('\n'));
-                    return;
-                }
-
-                codeToEnhance = generatePythonCode(graph);
-                setGeneratedCode(codeToEnhance);
-            }
-
-            // AI로 코드 개선
-            const enhanced = await enhanceCodeWithAI(codeToEnhance, userIntent);
-            setEnhancedCode(enhanced);
-            setShowEnhancedCode(true); // AI 개선 코드 표시
-            setShowCodePreview(true); // 코드 미리보기 모달 표시
+            const graph = exportGraph(editor, areaRef.current);
+            const validationErrors = validatePipeline(graph);
             
-            // localStorage에 즉시 저장
-            if (selectedLogicId) {
-                localStorage.setItem(`enhanced_code_${selectedLogicId}`, enhanced);
+            if (validationErrors.length > 0) {
+                toast.error(validationErrors.join('\n'));
+                return;
             }
-            toast.success('AI가 코드를 생성하고 개선했습니다! ✨');
+
+            const code = generatePythonCode(graph);
+            setGeneratedCode(code);
+            setShowCodePreview(true);
+            toast.success('Python 코드가 생성되었습니다!');
         } catch (error) {
-            console.error('코드 개선 오류:', error);
-            toast.error(error.message || 'AI 코드 생성에 실패했습니다.');
-        } finally {
-            setIsEnhancing(false);
+            console.error('코드 생성 오류:', error);
+            toast.error(error.message || '코드 생성에 실패했습니다.');
         }
-    }, [generatedCode, userIntent, selectedLogicId, toast, editorRef, areaRef, validatePipeline]);
+    }, [editorRef, areaRef, validatePipeline, toast]);
 
     // CSV 파일들 다운로드
     const handleDownloadCSVFiles = useCallback(() => {
@@ -409,63 +356,18 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
 
             const graph = editor && area ? exportGraph(editor, area) : { nodes: [], connections: [] };
 
-            // AI 개선 코드가 있으면 그것을 사용, 없으면 기본 코드 사용
-            let finalCode;
-            if (enhancedCode) {
-                // AI 개선 코드를 직접 Jupyter 형식으로 변환
-                const sections = enhancedCode.split('\n\n');
-                const cells = [
-                    {
-                        cell_type: 'markdown',
-                        metadata: {},
-                        source: [
-                            `# ${logicName || 'ML Pipeline'}\n`,
-                            '\n',
-                            '✨ **AI가 개선한 코드**: 에러 처리, 로깅, 시각화가 추가되었습니다.\n',
-                            '\n',
-                            `Generated on: ${new Date().toLocaleString('ko-KR')}\n`
-                        ]
-                    },
-                    ...sections.map(section => ({
-                        cell_type: 'code',
-                        execution_count: null,
-                        metadata: {},
-                        outputs: [],
-                        source: section.split('\n').map(line => line + '\n')
-                    }))
-                ];
-                
-                const notebook = {
-                    cells,
-                    metadata: {
-                        kernelspec: {
-                            display_name: 'Python 3',
-                            language: 'python',
-                            name: 'python3'
-                        },
-                        language_info: {
-                            name: 'python',
-                            version: '3.8.0'
-                        }
-                    },
-                    nbformat: 4,
-                    nbformat_minor: 4
-                };
-                
-                finalCode = JSON.stringify(notebook, null, 2);
-            } else {
-                finalCode = generateJupyterNotebook(graph, logicName || 'ML Pipeline');
-            }
+            // 노드 기반 코드로 Jupyter Notebook 생성
+            const notebookContent = generateJupyterNotebook(graph, logicName || 'ML Pipeline');
             
-            const blob = new Blob([finalCode], { type: 'application/json' });
+            const blob = new Blob([notebookContent], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${logicName || 'pipeline'}${enhancedCode ? '_ai_enhanced' : ''}.ipynb`;
+            a.download = `${logicName || 'pipeline'}.ipynb`;
             a.click();
             URL.revokeObjectURL(url);
 
-            toast.success(`Jupyter Notebook${enhancedCode ? ' (AI 개선)' : ''}이 다운로드되었습니다!`);
+            toast.success('Jupyter Notebook이 다운로드되었습니다!');
         } catch (error) {
             if (error.name === 'PipelineValidationError') {
                 toast.error(error.message);
@@ -474,7 +376,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 console.error('Jupyter export error:', error);
             }
         }
-    }, [editorRef, areaRef, logicName, enhancedCode, toast]);
+    }, [editorRef, areaRef, logicName, toast]);
 
     // Python Script 다운로드
     const handleExportPython = useCallback(() => {
@@ -484,32 +386,18 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
 
             const graph = editor && area ? exportGraph(editor, area) : { nodes: [], connections: [] };
 
-            // AI 개선 코드가 있으면 그것을 사용, 없으면 기본 코드 사용
-            let finalCode;
-            if (enhancedCode) {
-                const header = `"""
-${logicName || 'ML Pipeline'}
-
-✨ AI-Enhanced ML Pipeline Script
-- 에러 처리, 로깅, 시각화 포함
-- Generated on: ${new Date().toLocaleString('ko-KR')}
-"""
-
-`;
-                finalCode = header + enhancedCode;
-            } else {
-                finalCode = generatePythonScript(graph, logicName || 'ML Pipeline');
-            }
+            // 노드 기반 코드로 Python 스크립트 생성
+            const scriptContent = generatePythonScript(graph, logicName || 'ML Pipeline');
             
-            const blob = new Blob([finalCode], { type: 'text/x-python' });
+            const blob = new Blob([scriptContent], { type: 'text/x-python' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${logicName || 'pipeline'}${enhancedCode ? '_ai_enhanced' : ''}.py`;
+            a.download = `${logicName || 'pipeline'}.py`;
             a.click();
             URL.revokeObjectURL(url);
 
-            toast.success(`Python 스크립트${enhancedCode ? ' (AI 개선)' : ''}가 다운로드되었습니다!`);
+            toast.success('Python 스크립트가 다운로드되었습니다!');
         } catch (error) {
             if (error.name === 'PipelineValidationError') {
                 toast.error(error.message);
@@ -518,7 +406,7 @@ ${logicName || 'ML Pipeline'}
                 console.error('Python export error:', error);
             }
         }
-    }, [editorRef, areaRef, logicName, enhancedCode, toast]);
+    }, [editorRef, areaRef, logicName, toast]);
 
     // Gemini에서 생성된 파이프라인을 캔버스에 추가
     const applyPipelineToCanvas = useCallback(async (pipeline) => {
@@ -905,14 +793,75 @@ ${logicName || 'ML Pipeline'}
                                 toast.error('코드 목적을 먼저 입력해주세요.');
                                 return;
                             }
-                            // GeminiPipelineGenerator로 스크롤
-                            const geminiSection = document.querySelector('[data-gemini-generator]');
-                            if (geminiSection) {
-                                geminiSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                                // 프롬프트 자동 설정
-                                const event = new CustomEvent('setGeminiPrompt', { detail: userIntent });
-                                window.dispatchEvent(event);
-                                toast.success('AI 노드 추천 섹션으로 이동합니다!');
+                            
+                            try {
+                                // Gemini API로 자유 형식 텍스트를 작성 팁 양식으로 변환
+                                toast.info('AI가 설명을 분석하고 있습니다...');
+                                
+                                const apiKey = localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
+                                if (!apiKey) {
+                                    toast.error('Gemini API 키를 설정해주세요.');
+                                    return;
+                                }
+                                
+                                const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+                                
+                                const conversionPrompt = `다음 ML 프로젝트 설명을 아래 양식에 맞게 정리해주세요:
+
+**사용자 입력:**
+${userIntent}
+
+**출력 양식 (이 형식 그대로 출력):**
+• 데이터: [CSV 파일명] (컬럼명: [입력 컬럼들] → 목표: [타겟 컬럼])
+• 목표: [분류/회귀/클러스터링] - [구체적 설명]
+• 금지: [사용 금지 라이브러리/방법] (있으면 명시, 없으면 "없음")
+• 출력: [저장할 파일명] (있으면 명시, 없으면 "자동 생성")
+• 기타: [추가 요구사항] (있으면 명시, 없으면 생략)
+
+**중요**: 
+- 양식의 이모지(•)와 콜론(:)을 정확히 지켜주세요
+- 각 항목은 한 줄로 작성
+- 사용자가 명시하지 않은 항목은 추론하여 작성
+- 금지/출력/기타 항목이 없으면 해당 줄 생략`;
+
+                                const response = await fetch(API_URL, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({
+                                        contents: [{ parts: [{ text: conversionPrompt }] }],
+                                        generationConfig: {
+                                            temperature: 0.3,
+                                            maxOutputTokens: 512,
+                                        }
+                                    })
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error('AI 변환 실패');
+                                }
+
+                                const data = await response.json();
+                                const formattedPrompt = data.candidates?.[0]?.content?.parts?.[0]?.text || userIntent;
+                                
+                                // GeminiPipelineGenerator로 스크롤
+                                const geminiSection = document.querySelector('[data-gemini-generator]');
+                                if (geminiSection) {
+                                    geminiSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    // 변환된 프롬프트 자동 설정
+                                    const event = new CustomEvent('setGeminiPrompt', { detail: formattedPrompt });
+                                    window.dispatchEvent(event);
+                                    toast.success('✨ AI가 설명을 정리했습니다!');
+                                }
+                            } catch (error) {
+                                console.error('프롬프트 변환 오류:', error);
+                                // 실패 시 원본 텍스트로 진행
+                                const geminiSection = document.querySelector('[data-gemini-generator]');
+                                if (geminiSection) {
+                                    geminiSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    const event = new CustomEvent('setGeminiPrompt', { detail: userIntent });
+                                    window.dispatchEvent(event);
+                                    toast.warning('원본 설명으로 진행합니다.');
+                                }
                             }
                         }}
                         className="mt-3 w-full px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-500"
@@ -969,7 +918,7 @@ ${logicName || 'ML Pipeline'}
                     {/* 모달 헤더 */}
                     <div className="flex items-center justify-between p-6 border-b border-neutral-700">
                         <h2 className="text-2xl font-bold text-gray-100">
-                            {showEnhancedCode && enhancedCode ? '✨ AI 개선 코드' : '🐍 노드 기반 코드'}
+                            🐍 생성된 Python 코드
                         </h2>
                         <button 
                             onClick={() => setShowCodePreview(false)}
@@ -982,64 +931,12 @@ ${logicName || 'ML Pipeline'}
                     {/* 코드 영역 */}
                     <div className="flex-1 overflow-auto p-6">
                         <pre className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 text-sm text-green-400 font-mono overflow-x-auto">
-                            <code>{showEnhancedCode && enhancedCode ? enhancedCode : generatedCode}</code>
+                            <code>{generatedCode}</code>
                         </pre>
                     </div>
 
-                    {/* AI 개선 상태 표시 */}
-                    {showEnhancedCode && enhancedCode && (
-                        <div className="px-6 pb-3">
-                            <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-3">
-                                <p className="text-sm text-purple-300">
-                                    ✨ <strong>AI 개선 완료!</strong> 에러 처리, 로깅, 시각화, 모델 저장 기능이 추가되었습니다.
-                                </p>
-                            </div>
-                        </div>
-                    )}
-
                     {/* 모달 푸터 */}
                     <div className="flex flex-col gap-3 p-6 border-t border-neutral-700">
-                        {/* 코드 전환 버튼 */}
-                        {enhancedCode && (
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={() => setShowEnhancedCode(false)}
-                                    className={`flex-1 px-4 py-3 text-base font-semibold rounded-lg transition-colors ${
-                                        !showEnhancedCode
-                                            ? 'bg-cyan-600 text-white'
-                                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                    }`}
-                                >
-                                    📄 노드 기반 코드
-                                </button>
-                                <button
-                                    onClick={() => setShowEnhancedCode(true)}
-                                    className={`flex-1 px-4 py-3 text-base font-semibold rounded-lg transition-colors ${
-                                        showEnhancedCode
-                                            ? 'bg-purple-600 text-white'
-                                            : 'bg-gray-700 text-gray-300 hover:bg-gray-600'
-                                    }`}
-                                >
-                                    ✨ AI 개선 코드
-                                </button>
-                            </div>
-                        )}
-
-                        {/* AI 개선 버튼 (개선 코드가 없을 때만 표시) */}
-                        {!enhancedCode && (
-                            <button
-                                onClick={handleEnhanceCode}
-                                disabled={isEnhancing || !userIntent.trim()}
-                                className={`w-full px-4 py-3 text-base font-semibold text-white rounded-lg transition-colors ${
-                                    isEnhancing || !userIntent.trim()
-                                        ? 'bg-gray-600 cursor-not-allowed'
-                                        : 'bg-purple-600 hover:bg-purple-500'
-                                }`}
-                            >
-                                {isEnhancing ? '🔄 AI 개선 중...' : '✨ AI로 코드 개선하기'}
-                            </button>
-                        )}
-
                         {/* CSV 다운로드 버튼 */}
                         <button
                             onClick={handleDownloadCSVFiles}
@@ -1052,7 +949,7 @@ ${logicName || 'ML Pipeline'}
                         <div className="flex gap-3">
                             <button
                                 onClick={() => {
-                                    navigator.clipboard.writeText(showEnhancedCode && enhancedCode ? enhancedCode : generatedCode);
+                                    navigator.clipboard.writeText(generatedCode);
                                     toast.success('코드가 클립보드에 복사되었습니다!');
                                 }}
                                 className="flex-1 px-4 py-2 text-base font-semibold text-white bg-cyan-600 rounded-lg hover:bg-cyan-500"

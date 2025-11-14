@@ -118,7 +118,7 @@ const GeminiPipelineGenerator = ({ onApplyPipeline }) => {
                     fontSize: '18px',
                     color: 'var(--text-primary)'
                 }}>
-                    🤖 AI Python 코드 생성
+                    🤖 노드 로직 배치 가이드 
                 </h3>
                 {hasApiKey && !showApiKeyInput && (
                     <button
@@ -268,46 +268,7 @@ const GeminiPipelineGenerator = ({ onApplyPipeline }) => {
                         />
                     </div>
 
-                    {/* 예시 프롬프트 */}
-                    <div style={{ marginBottom: '15px' }}>
-                        <p style={{
-                            fontSize: '12px',
-                            color: 'var(--text-secondary)',
-                            marginBottom: '8px'
-                        }}>
-                            💡 예시:
-                        </p>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {examplePrompts.map((example, idx) => (
-                                <button
-                                    key={idx}
-                                    onClick={() => setPrompt(example)}
-                                    style={{
-                                        padding: '8px 12px',
-                                        fontSize: '12px',
-                                        backgroundColor: 'var(--bg-primary)',
-                                        color: 'var(--text-secondary)',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer',
-                                        textAlign: 'left',
-                                        transition: 'all 0.2s'
-                                    }}
-                                    onMouseEnter={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'var(--bg-secondary)';
-                                        e.currentTarget.style.borderColor = '#3b82f6';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                        e.currentTarget.style.backgroundColor = 'var(--bg-primary)';
-                                        e.currentTarget.style.borderColor = 'var(--border-color)';
-                                    }}
-                                >
-                                    {example}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-
+                    
                     {/* 생성 버튼 */}
                     <button
                         onClick={handleGenerate}
