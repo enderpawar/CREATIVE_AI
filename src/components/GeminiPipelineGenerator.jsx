@@ -687,10 +687,11 @@ const GeminiPipelineGenerator = ({ onApplyPipeline }) => {
                                 fontSize: '13px',
                                 fontFamily: 'Consolas, Monaco, "Courier New", monospace',
                                 color: 'var(--text-primary)',
-                                backgroundColor: '#1e1e1e',
+                                backgroundColor: 'var(--control-bg)',
                                 overflow: 'auto',
                                 maxHeight: '500px',
-                                lineHeight: '1.5'
+                                lineHeight: '1.5',
+                                border: '1px solid var(--control-border)'
                             }}>
                                 <code>{generatedCode}</code>
                             </pre>

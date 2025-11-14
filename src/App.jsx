@@ -98,25 +98,23 @@ const App = () => {
   return (
     <div className="flex items-center justify-center min-h-screen font-sans bg-transparent">
 
-      {/* Theme Toggle */}
-      {currentPage === 'asset' && (
-        <div style={{ position: 'fixed', top: 14, right: 14, zIndex: 1000 }}>
-          <button
-            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-            style={{
-              padding: '8px 12px',
-              borderRadius: 10,
-              border: '1px solid var(--panel-border)',
-              background: 'var(--panel-bg)',
-              color: 'var(--text-primary)',
-              boxShadow: '0 6px 20px rgba(0,0,0,0.12)'
-            }}
-            title="테마 전환 (Dark/Light)"
-          >
-            {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-          </button>
-        </div>
-      )}
+      {/* Theme Toggle - 모든 페이지에서 표시 */}
+      <div style={{ position: 'fixed', top: 14, right: 14, zIndex: 1000 }}>
+        <button
+          onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          style={{
+            padding: '8px 12px',
+            borderRadius: 10,
+            border: '1px solid var(--panel-border)',
+            background: 'var(--panel-bg)',
+            color: 'var(--text-primary)',
+            boxShadow: '0 6px 20px rgba(0,0,0,0.12)'
+          }}
+          title="테마 전환 (Dark/Light)"
+        >
+          {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+        </button>
+      </div>
       {currentPage === 'asset' ? (
         <AssetPage
           logics={logics}
@@ -153,6 +151,7 @@ const App = () => {
           onBack={handleBackToAssetPage}
           onSave={handleSaveLogic}
           defaultNewLogicName={newLogicName}
+          theme={theme}
         />
       )}
     </div>

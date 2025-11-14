@@ -144,7 +144,8 @@ html, body {
 
 /* Text */
 .text-gray-100, .text-gray-200, .text-gray-300 { color: var(--text-primary) !important; }
-.text-gray-400, .text-gray-500 { color: var(--muted) !important; }
+.text-gray-400, .text-gray-500, .text-gray-600, .text-gray-700 { color: var(--muted) !important; }
+.text-gray-800, .text-gray-900 { color: var(--text-primary) !important; }
 
 /* Hover utilities */
 .hover\:bg-neutral-700:hover { background-color: var(--panel-border) !important; }

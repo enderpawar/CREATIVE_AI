@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from './toast/ToastProvider.jsx';
 import { useReteAppEditor } from '../hooks/useReteAppEditor';
 import { createNodeByKind, clientToWorld, exportGraph, importGraph } from '../rete/app-editor';
-import { loadLogic as loadLogicFromStorage, loadTheme, saveTheme } from '../utils/logicStorage';
+import { loadLogic as loadLogicFromStorage } from '../utils/logicStorage';
 import { generatePythonCode, generateJupyterNotebook, generatePythonScript } from '../utils/pipelineToCode';
 import { enhanceCodeWithAI } from '../utils/geminiPipeline';
 import CSVDataManager from './CSVDataManager.jsx';
@@ -11,12 +11,11 @@ import GeminiPipelineGenerator from './GeminiPipelineGenerator.jsx';
 // ----------------------------------------------------------------
 // LogicEditorPage: ML 파이프라인을 편집하는 컴포넌트
 // ----------------------------------------------------------------
-const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName = '' }) => {
+const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName = '', theme = 'dark' }) => {
     const toast = useToast();
     const [logic, setLogic] = useState(null);
     const [logicName, setLogicName] = useState('');
     const canvasRef = useRef(null);
-    const [theme, setTheme] = useState('dark');
     const { editorRef, areaRef, ready } = useReteAppEditor(canvasRef);
     const [showCodePreview, setShowCodePreview] = useState(false);
     const [generatedCode, setGeneratedCode] = useState('');
@@ -56,38 +55,6 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             localStorage.setItem(`user_intent_${selectedLogicId}`, userIntent);
         }
     }, [userIntent, selectedLogicId]);
-
-    // 초기 테마 동기화 (localStorage > document > 시스템 선호)
-    useEffect(() => {
-        const savedTheme = loadTheme();
-        if (savedTheme) {
-            setTheme(savedTheme);
-            document.documentElement.setAttribute('data-theme', savedTheme);
-            return;
-        }
-        
-        const htmlTheme = document.documentElement.getAttribute('data-theme');
-        if (htmlTheme === 'light' || htmlTheme === 'dark') {
-            setTheme(htmlTheme);
-            return;
-        }
-        
-        const preferDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-        const next = preferDark ? 'dark' : 'light';
-        setTheme(next);
-        document.documentElement.setAttribute('data-theme', next);
-    }, []);
-
-
-
-    const toggleTheme = useCallback(() => {
-        setTheme((t) => {
-            const next = t === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', next);
-            saveTheme(next);
-            return next;
-        });
-    }, []);
 
     // ✅ 파이프라인 검증 함수
     const validatePipeline = useCallback((pipeline) => {
@@ -607,20 +574,6 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 className="text-2xl font-semibold tracking-tight bg-transparent text-gray-100 border-b border-transparent focus:border-cyan-400/60 outline-none placeholder:text-gray-500"
             />
                         <div className="flex gap-3 items-center">
-                                {/* Light/Dark 토글 */}
-                                <button
-                                    onClick={toggleTheme}
-                                    style={{
-                                        padding: '8px 12px',
-                                        borderRadius: 10,
-                                        border: '1px solid var(--panel-border)',
-                                        background: 'var(--panel-bg)',
-                                        color: 'var(--text-primary)'
-                                    }}
-                                    title="테마 전환 (Dark/Light)"
-                                >
-                                    {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-                                </button>
                 {/* Python 코드 생성 버튼들 */}
                 <button 
                     onClick={handleGenerateCode}
@@ -907,8 +860,9 @@ ${userIntent}
 
         {/* Python 코드 미리보기 모달 */}
         {showCodePreview && (
-            <div 
-                className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+            <div
+                className="fixed inset-0 flex items-center justify-center z-50 p-4"
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
                 onClick={() => setShowCodePreview(false)}
             >
                 <div 
@@ -930,7 +884,7 @@ ${userIntent}
                     
                     {/* 코드 영역 */}
                     <div className="flex-1 overflow-auto p-6">
-                        <pre className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 text-sm text-green-400 font-mono overflow-x-auto">
+                        <pre className="bg-neutral-950 border border-neutral-800 rounded-lg p-4 text-sm font-mono overflow-x-auto" style={{ color: 'var(--text-primary)' }}>
                             <code>{generatedCode}</code>
                         </pre>
                     </div>
