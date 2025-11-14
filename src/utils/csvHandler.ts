@@ -73,40 +73,42 @@ export async function loadCSVFile(file: File): Promise<CSVData> {
 }
 
 /**
- * CSV 데이터를 localStorage에 저장
+ * CSV 데이터를 localStorage에 저장 (로직별로 저장)
  */
-export function saveCSVData(fileName: string, content: string): void {
-    const key = `csv_data_${fileName}`
+export function saveCSVData(fileName: string, content: string, logicId?: string): void {
+    const key = logicId ? `csv_data_${logicId}_${fileName}` : `csv_data_global_${fileName}`
     localStorage.setItem(key, content)
 }
 
 /**
- * localStorage에서 CSV 데이터 로드
+ * localStorage에서 CSV 데이터 로드 (로직별로 로드)
  */
-export function loadStoredCSV(fileName: string): string | null {
-    const key = `csv_data_${fileName}`
+export function loadStoredCSV(fileName: string, logicId?: string): string | null {
+    const key = logicId ? `csv_data_${logicId}_${fileName}` : `csv_data_global_${fileName}`
     return localStorage.getItem(key)
 }
 
 /**
- * 저장된 모든 CSV 파일 목록
+ * 저장된 모든 CSV 파일 목록 (로직별로 필터링)
  */
-export function listStoredCSVFiles(): string[] {
+export function listStoredCSVFiles(logicId?: string): string[] {
     const files: string[] = []
+    const prefix = logicId ? `csv_data_${logicId}_` : 'csv_data_global_'
+    
     for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i)
-        if (key?.startsWith('csv_data_')) {
-            files.push(key.replace('csv_data_', ''))
+        if (key?.startsWith(prefix)) {
+            files.push(key.replace(prefix, ''))
         }
     }
     return files
 }
 
 /**
- * CSV 파일 삭제
+ * CSV 파일 삭제 (로직별로 삭제)
  */
-export function deleteStoredCSV(fileName: string): void {
-    const key = `csv_data_${fileName}`
+export function deleteStoredCSV(fileName: string, logicId?: string): void {
+    const key = logicId ? `csv_data_${logicId}_${fileName}` : `csv_data_global_${fileName}`
     localStorage.removeItem(key)
 }
 

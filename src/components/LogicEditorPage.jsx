@@ -262,7 +262,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 return;
             }
 
-            const code = generatePythonCode(graph);
+            const code = generatePythonCode(graph, logic?.id);
             setGeneratedCode(code);
             setShowCodePreview(true);
             toast.success('Python 코드가 생성되었습니다!');
@@ -324,7 +324,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             const graph = editor && area ? exportGraph(editor, area) : { nodes: [], connections: [] };
 
             // 노드 기반 코드로 Jupyter Notebook 생성
-            const notebookContent = generateJupyterNotebook(graph, logicName || 'ML Pipeline');
+            const notebookContent = generateJupyterNotebook(graph, logicName || 'ML Pipeline', logic?.id);
             
             const blob = new Blob([notebookContent], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -354,7 +354,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             const graph = editor && area ? exportGraph(editor, area) : { nodes: [], connections: [] };
 
             // 노드 기반 코드로 Python 스크립트 생성
-            const scriptContent = generatePythonScript(graph, logicName || 'ML Pipeline');
+            const scriptContent = generatePythonScript(graph, logicName || 'ML Pipeline', logic?.id);
             
             const blob = new Blob([scriptContent], { type: 'text/x-python' });
             const url = URL.createObjectURL(blob);
@@ -842,6 +842,7 @@ ${userIntent}
                         toast.success(`${fileName} 선택됨`);
                     }} 
                     theme={theme}
+                    logicId={logic?.id}
                 />
                 
                 {/* 정보 패널 */}

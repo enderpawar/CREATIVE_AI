@@ -2,9 +2,9 @@ import React, { useState, useCallback } from 'react';
 import { loadCSVFile, saveCSVData, listStoredCSVFiles, deleteStoredCSV, validateCSV, loadStoredCSV } from '../utils/csvHandler';
 import { useToast } from './toast/ToastProvider';
 
-const CSVDataManager = ({ onSelectFile, theme = 'dark' }) => {
+const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
     const toast = useToast();
-    const [uploadedFiles, setUploadedFiles] = useState(listStoredCSVFiles());
+    const [uploadedFiles, setUploadedFiles] = useState(listStoredCSVFiles(logicId));
     const [selectedFile, setSelectedFile] = useState(null);
     const [preview, setPreview] = useState(null);
     const [showUploader, setShowUploader] = useState(false);
@@ -65,10 +65,10 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark' }) => {
             }
 
             // localStorage에 저장
-            saveCSVData(csvData.fileName, csvData.content);
+            saveCSVData(csvData.fileName, csvData.content, logicId);
             
             // 목록 업데이트
-            setUploadedFiles(listStoredCSVFiles());
+            setUploadedFiles(listStoredCSVFiles(logicId));
             setPreview(csvData);
             setSelectedFile(csvData.fileName);
             
@@ -86,21 +86,21 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark' }) => {
 
     const handleDeleteFile = useCallback((fileName) => {
         if (confirm(`${fileName}을(를) 삭제하시겠습니까?`)) {
-            deleteStoredCSV(fileName);
-            setUploadedFiles(listStoredCSVFiles());
+            deleteStoredCSV(fileName, logicId);
+            setUploadedFiles(listStoredCSVFiles(logicId));
             if (selectedFile === fileName) {
                 setSelectedFile(null);
                 setPreview(null);
             }
             toast.success('파일이 삭제되었습니다');
         }
-    }, [selectedFile, toast]);
+    }, [selectedFile, toast, logicId]);
 
     const handleSelectFile = useCallback((fileName) => {
         setSelectedFile(fileName);
         
         // localStorage에서 파일 내용 로드하여 미리보기 생성
-        const content = loadStoredCSV(fileName);
+        const content = loadStoredCSV(fileName, logicId);
         if (content) {
             try {
                 const lines = content.split('\n').filter(line => line.trim());
@@ -151,7 +151,7 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark' }) => {
         if (onSelectFile) {
             onSelectFile(fileName);
         }
-    }, [onSelectFile, toast]);
+    }, [onSelectFile, toast, logicId]);
 
     return (
         <div className={`csv-data-manager p-4 ${c.bg} rounded-2xl border ${c.border}`}>

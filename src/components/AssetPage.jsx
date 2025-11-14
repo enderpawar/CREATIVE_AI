@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 // ---------------------------------------------------------------
-// AssetPage: 기존의 로직 목록 페이지
+// AssetPage: 개선된 로직 목록 페이지
 // ----------------------------------------------------------------
 const AssetPage = ({
   logics,
@@ -14,6 +14,31 @@ const AssetPage = ({
   const [openedMenuId, setOpenedMenuId] = useState(null);
   const [editingId, setEditingId] = useState(null);
   const [editingValue, setEditingValue] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [sortBy, setSortBy] = useState('order'); // 'order', 'name', 'date'
+  const [viewMode, setViewMode] = useState('list'); // 'list', 'grid'
+
+  // 검색 및 정렬된 로직 목록
+  const filteredAndSortedLogics = React.useMemo(() => {
+    let filtered = logics.filter(logic => 
+      logic.name.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    if (sortBy === 'name') {
+      filtered = [...filtered].sort((a, b) => a.name.localeCompare(b.name));
+    } else if (sortBy === 'date') {
+      filtered = [...filtered].sort((a, b) => {
+        // ID에서 타임스탬프 추출 (logic-{timestamp}-{random})
+        const getTimestamp = (id) => {
+          const match = id.match(/logic-(\d+)-/);
+          return match ? parseInt(match[1]) : 0;
+        };
+        return getTimestamp(b.id) - getTimestamp(a.id);
+      });
+    }
+    
+    return filtered;
+  }, [logics, searchQuery, sortBy]);
 
   // 드래그 앤 드롭 순서 변경 핸들러
   const handleDragEnd = (result) => {
@@ -69,38 +94,153 @@ const AssetPage = ({
     setEditingValue('');
   };
 
-  return (
-    <div className="w-full max-w-6xl p-8 rounded-3xl shadow-2xl bg-neutral-950 text-gray-200 border border-neutral-800/70">
-      {/* 헤더 카드 */}
-      <div className="relative p-6 mb-6 rounded-2xl themed-card border border-neutral-800/70 overflow-hidden">
-        <div className="flex items-center justify-between">
-          <h2 className="mb-2 text-2xl font-semibold text-gray-100 tracking-tight">CREATIVE AI</h2>
-        </div>
+  // 더블클릭으로 바로 편집
+  const handleDoubleClick = (logicId) => {
+    setOpenedMenuId(null);
+    onLogicClick(logicId);
+  };
 
-        <div className="mb-1 text-sm sm:text-base text-gray-400">
-          총 로직 수: <span className="font-semibold text-cyan-400">{logics.length}</span>
+  return (
+    <div className="w-full max-w-6xl p-8 rounded-3xl shadow-2xl themed-card border border-neutral-800/70">
+      {/* 헤더 카드 - 그라디언트 배경과 글로우 효과 */}
+      <div className="relative p-6 mb-6 rounded-2xl themed-card border border-neutral-800/70 overflow-hidden">
+        {/* 배경 그라디언트 효과 */}
+        <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none"></div>
+        <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        
+        <div className="relative z-10">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 via-blue-500 to-purple-500 rounded-xl flex items-center justify-center shadow-lg shadow-cyan-500/30 relative overflow-hidden">
+                {/* ML 로고 */}
+                <svg viewBox="0 0 100 100" className="w-8 h-8">
+                  {/* 노드 연결 */}
+                  <ellipse cx="50" cy="50" rx="35" ry="20" fill="none" stroke="#67e8f9" strokeWidth="2" opacity="0.6"/>
+                  {/* 원형 노드 */}
+                  <circle cx="25" cy="50" r="8" fill="white"/>
+                  {/* 사각형 노드 */}
+                  <rect x="42" y="42" width="16" height="16" fill="white"/>
+                  {/* 삼각형 노드 */}
+                  <path d="M75 58 L83 42 L67 42 Z" fill="white"/>
+                  {/* 무한대 기호 */}
+                  <text x="50" y="82" fontSize="16" fill="white" textAnchor="middle" fontWeight="bold">∞</text>
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-400 bg-clip-text text-transparent tracking-tight">
+                CREATIVE AI
+              </h2>
+            </div>
+            
+            {/* 뷰 모드 전환 - 개선된 디자인 */}
+            <div className="flex gap-2 p-1.5 rounded-lg border border-neutral-700/50" style={{ backgroundColor: 'var(--control-bg)' }}>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-4 py-2 text-sm rounded-md transition-all duration-200 ${
+                  viewMode === 'list' 
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/30' 
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-neutral-800'
+                }`}
+                title="리스트 뷰"
+              >
+                <span className="mr-1">☰</span> 리스트
+              </button>
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-4 py-2 text-sm rounded-md transition-all duration-200 ${
+                  viewMode === 'grid' 
+                    ? 'bg-gradient-to-r from-cyan-500 to-blue-500 text-white shadow-lg shadow-cyan-500/30' 
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-neutral-800'
+                }`}
+                title="그리드 뷰"
+              >
+                <span className="mr-1">⊞</span> 그리드
+              </button>
+            </div>
+          </div>
+
+          {/* 검색 및 정렬 - 개선된 디자인 */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-4">
+            <div className="relative flex-1">
+              <input
+                type="text"
+                placeholder="로직 검색..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 text-sm border border-neutral-700/50 rounded-lg focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50 outline-none transition-all"
+                style={{ backgroundColor: 'var(--control-bg)', color: 'var(--text-primary)' }}
+              />
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">🔍</span>
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300 transition"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-4 py-2.5 text-sm border border-neutral-700/50 rounded-lg focus:ring-2 focus:ring-cyan-400/40 outline-none transition-all cursor-pointer"
+              style={{ backgroundColor: 'var(--control-bg)', color: 'var(--text-primary)' }}
+            >
+              <option value="order">📌 기본 순서</option>
+              <option value="name">🔤 이름순</option>
+              <option value="date">🕒 최신순</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm text-gray-400">
+            <div className="px-3 py-1.5 rounded-lg border border-neutral-700/50" style={{ backgroundColor: 'var(--panel-bg)' }}>
+              총 로직: <span className="font-semibold text-cyan-400">{logics.length}</span>
+            </div>
+            {searchQuery && (
+              <div className="px-3 py-1.5 bg-cyan-500/10 rounded-lg border border-cyan-500/30">
+                검색 결과: <span className="font-semibold text-cyan-400">{filteredAndSortedLogics.length}</span>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* KPI 카드 4개 */}
+      {/* KPI 카드 4개 - 개선된 디자인 */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {[{
-          title:'총 로직 수', value: String(logics.length||0)
+          title:'총 로직 수', value: String(logics.length||0), icon: '📊', color: 'cyan'
         },{
-          title:'실행 중', value: '0'
+          title:'실행 중', value: '0', icon: '⚡', color: 'yellow'
         },{
-          title:'AI 적중률', value: '0.00%'
+          title:'AI 적중률', value: '0.00%', icon: '🎯', color: 'green'
         },{
-          title:'생성된 로직 수 ', value: '0'
+          title:'생성된 로직 수', value: '0', icon: '✨', color: 'purple'
         }].map((s,idx)=> (
-          <div key={idx} className="p-5 rounded-2xl bg-neutral-900/70 border border-neutral-800/70 hover:border-cyan-500/40 transition">
-            <div className="text-xs uppercase tracking-wide text-gray-400 mb-2">{s.title}</div>
-            <div className="text-3xl font-semibold text-gray-100">{s.value}</div>
-            {/* 미니 바 차트 */}
-            <div className="mt-3 h-10 flex items-end gap-1">
-              {[4,8,3,6,9,5,7,6,8,10].map((h,i)=> (
-                <div key={i} className="w-1.5 bg-neutral-700 rounded" style={{height:`${h*6}%`}} />
-              ))}
+          <div 
+            key={idx} 
+            className="group relative p-5 rounded-2xl themed-card border border-neutral-800/70 hover:border-cyan-500/40 transition-all duration-300 hover:shadow-lg hover:shadow-cyan-500/10 hover:-translate-y-1"
+          >
+            {/* 배경 글로우 효과 */}
+            <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/0 to-blue-500/0 group-hover:from-cyan-500/5 group-hover:to-blue-500/5 rounded-2xl transition-all duration-300"></div>
+            
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-2">
+                <div className="text-xs uppercase tracking-wide text-gray-400 font-semibold">{s.title}</div>
+                <span className="text-xl opacity-60 group-hover:opacity-100 transition-opacity">{s.icon}</span>
+              </div>
+              <div className="text-3xl font-bold text-gray-100 mb-3">{s.value}</div>
+              {/* 미니 바 차트 - 애니메이션 추가 */}
+              <div className="h-10 flex items-end gap-1">
+                {[4,8,3,6,9,5,7,6,8,10].map((h,i)=> (
+                  <div 
+                    key={i} 
+                    className="w-1.5 bg-gradient-to-t from-cyan-500/60 to-cyan-400/40 rounded-sm transition-all duration-300 group-hover:from-cyan-400 group-hover:to-cyan-300" 
+                    style={{
+                      height:`${h*6}%`,
+                      animationDelay: `${i * 50}ms`
+                    }} 
+                  />
+                ))}
+              </div>
             </div>
           </div>
         ))}
@@ -109,30 +249,42 @@ const AssetPage = ({
       <DragDropContext onDragEnd={handleDragEnd}>
         <Droppable droppableId="logic-list">
           {(provided) => (
-            <div className='flex flex-col gap-3' ref={provided.innerRef} {...provided.droppableProps}>
-              {logics.length > 0 ? (
-                logics.map((logic, index) => (
+            <div 
+              className={viewMode === 'grid' 
+                ? 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4' 
+                : 'flex flex-col gap-3'
+              } 
+              ref={provided.innerRef} 
+              {...provided.droppableProps}
+            >
+              {filteredAndSortedLogics.length > 0 ? (
+                filteredAndSortedLogics.map((logic, index) => (
                   // wrapper: 외곽 윤곽선은 ring으로 강조하고, 내부 경계선 색은 유지
-                  <div key={logic.id} className="flex flex-col group rounded-xl ring-1 ring-transparent hover:ring-cyan-500/40 transition-shadow">
+                  <div key={logic.id} className="flex flex-col group rounded-xl ring-1 ring-transparent hover:ring-cyan-500/40 transition-all duration-300">
                     <Draggable draggableId={logic.id} index={index} isDragDisabled={logic.id === editingId}>
                       {(provided, snapshot) => (
                         <div
                           ref={provided.innerRef}
                           {...provided.draggableProps}
-                          className={`flex items-center justify-between p-4 transition-all duration-200 ease-in-out cursor-pointer 
-                          bg-neutral-900/70 border border-neutral-800/70 hover:shadow-[0_8px_30px_rgba(0,0,0,0.35)] hover:-translate-y-0.5 
+                          className={`relative flex items-center justify-between p-4 transition-all duration-300 ease-in-out cursor-pointer 
+                          themed-card border border-neutral-800/70 
+                          hover:shadow-[0_8px_30px_rgba(34,211,238,0.15)] hover:-translate-y-1 hover:border-cyan-500/50
                           ${openedMenuId === logic.id ? 'rounded-t-xl rounded-b-none border-b-0' : 'rounded-xl'}
-                          ${snapshot.isDragging ? 'ring-2 ring-cyan-400/30' : ''}`}
+                          ${snapshot.isDragging ? 'ring-2 ring-cyan-400/50 shadow-2xl shadow-cyan-500/30 scale-105' : ''}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (logic.id === editingId) return; // 편집 중에는 토글하지 않음
+                            if (logic.id === editingId) return;
                             setOpenedMenuId(logic.id === openedMenuId ? null : logic.id);
                           }}
+                          onDoubleClick={() => handleDoubleClick(logic.id)}
                           role="button"
                           tabIndex={0}
                         >
-                          {/* 로직 이름 영역 (행 전체가 클릭 가능하므로 별도 onClick 불필요) */}
-                          <div className="flex-grow">
+                          {/* 배경 그라디언트 효과 */}
+                          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/0 via-blue-500/0 to-purple-500/0 group-hover:from-cyan-500/5 group-hover:via-blue-500/3 group-hover:to-purple-500/5 rounded-xl transition-all duration-300 pointer-events-none"></div>
+                          
+                          {/* 로직 이름 영역 */}
+                          <div className="flex-grow relative z-10">
                             {logic.id === editingId ? (
                               <input
                                 className="w-full px-3 py-2 text-sm rounded outline-none bg-neutral-800 text-gray-100 border border-neutral-700 focus:ring-2 focus:ring-cyan-400/40 focus:border-cyan-400/50"
@@ -147,14 +299,21 @@ const AssetPage = ({
                                 autoFocus
                               />
                             ) : (
-                              <span className="text-base font-medium text-gray-100">{index + 1}. {logic.name}</span>
+                              <div className="flex items-center gap-3">
+                                <span className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 text-cyan-400 text-sm font-bold">
+                                  {index + 1}
+                                </span>
+                                <span className="text-base font-medium text-gray-100 group-hover:text-cyan-300 transition-colors">
+                                  {logic.name}
+                                </span>
+                              </div>
                             )}
                           </div>
-                          {/* 드래그 핸들: 드래그 시작 시 슬라이드 메뉴 닫기 */}
+                          {/* 드래그 핸들 - 개선된 디자인 */}
                           {logic.id !== editingId && (
                             <span
                               {...provided.dragHandleProps}
-                              className="ml-4 mr-3 cursor-grab text-xl select-none text-gray-400 hover:text-gray-200"
+                              className="relative z-10 ml-4 mr-2 cursor-grab active:cursor-grabbing text-2xl select-none text-gray-500 hover:text-cyan-400 transition-colors"
                               aria-label="드래그 핸들"
                               onMouseDown={(e) => {
                                 setOpenedMenuId(null);
@@ -164,31 +323,32 @@ const AssetPage = ({
                               }}
                               onClick={(e) => e.stopPropagation()}
                             >
-                              ☰
+                              ⋮⋮
                             </span>
                           )}
                         </div>
                       )}
                     </Draggable>
-                    {/* 슬라이드 메뉴 영역 */}
+                    {/* 슬라이드 메뉴 영역 - 개선된 디자인 */}
                     <div
-                      className={`overflow-hidden transition-all duration-300 ${openedMenuId === logic.id ? 'max-h-16 opacity-100' : 'max-h-0 opacity-0'} 
-                      bg-neutral-900/70 border-x border-b border-t border-neutral-800/70 rounded-b-xl flex items-center -mt-px`}
+                      className={`overflow-hidden transition-all duration-300 ${openedMenuId === logic.id ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'} 
+                      themed-card border-x border-b border-neutral-800/70 rounded-b-xl flex items-center backdrop-blur-sm`}
                       style={{ minWidth: '120px' }}
                     >
                       {openedMenuId === logic.id && (
-                        <div className="flex flex-row justify-end w-full gap-2 px-4 py-2">
+                        <div className="flex flex-row justify-end w-full gap-2 px-4 py-3">
                           <button
-                            className="px-3 py-1 rounded text-sm bg-neutral-800 text-gray-200 border border-neutral-700 hover:border-cyan-500/40 hover:text-white"
+                            className="group/btn px-4 py-2 rounded-lg text-sm bg-gradient-to-r from-cyan-600/80 to-blue-600/80 hover:from-cyan-500 hover:to-blue-500 text-white border border-cyan-500/30 transition-all duration-200 shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 hover:-translate-y-0.5"
                             onClick={() => {
                               setOpenedMenuId(null);
                               onLogicClick(logic.id);
                             }}
+                            title="로직 편집"
                           >
-                            수정하기
+                            <span className="mr-1.5">✏️</span> 수정
                           </button>
                           <button
-                            className="px-3 py-1 rounded text-sm text-red-400 bg-neutral-800 border border-neutral-700 hover:bg-red-500/10 hover:text-red-300"
+                            className="group/btn px-4 py-2 rounded-lg text-sm bg-neutral-800/80 hover:bg-red-600/80 text-red-400 hover:text-white border border-neutral-700/50 hover:border-red-500/30 transition-all duration-200 hover:shadow-lg hover:shadow-red-500/20 hover:-translate-y-0.5"
                             onClick={() => {
                               setOpenedMenuId(null);
                               const confirmed = window.confirm(`정말로 "${logic.name}" 로직을 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.`);
@@ -196,8 +356,9 @@ const AssetPage = ({
                                 onDeleteLogic(logic.id);
                               }
                             }}
+                            title="로직 삭제"
                           >
-                            삭제하기
+                            <span className="mr-1.5">🗑️</span> 삭제
                           </button>
                         </div>
                       )}
@@ -205,19 +366,49 @@ const AssetPage = ({
                   </div>
                 ))
               ) : (
-                <p className="text-gray-400">저장된 로직이 없습니다.</p>
+                <div className="col-span-full text-center py-16">
+                  <div className="relative inline-block">
+                    <div className="absolute inset-0 bg-cyan-500/20 blur-3xl rounded-full"></div>
+                    <div className="relative text-7xl mb-6 animate-bounce">📂</div>
+                  </div>
+                  <p className="text-gray-300 text-xl font-medium mb-2">
+                    {searchQuery ? '검색 결과가 없습니다' : '저장된 로직이 없습니다'}
+                  </p>
+                  <p className="text-gray-500 text-sm mb-4">
+                    {searchQuery ? '다른 검색어로 시도해보세요' : '새 로직을 추가하여 시작하세요'}
+                  </p>
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="px-6 py-2.5 bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white rounded-lg text-sm font-medium transition-all duration-200 shadow-lg shadow-cyan-500/30 hover:shadow-cyan-500/50 hover:-translate-y-0.5"
+                    >
+                      🔄 검색 초기화
+                    </button>
+                  )}
+                </div>
               )}
               {provided.placeholder}
             </div>
           )}
         </Droppable>
       </DragDropContext>
+      
+      {/* 새 로직 추가 버튼 - 개선된 디자인 */}
       <button
-        className="flex items-center justify-center w-full p-4 mt-5 text-lg font-semibold text-white rounded-xl cursor-pointer transition-colors duration-200 
-        bg-cyan-600 hover:bg-cyan-500 shadow-[0_10px_30px_-10px_rgba(34,211,238,0.5)]"
+        className="group relative flex items-center justify-center w-full p-5 mt-6 text-lg font-bold text-white rounded-xl cursor-pointer transition-all duration-300 overflow-hidden
+        bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 
+        shadow-[0_10px_40px_-10px_rgba(34,211,238,0.6)] hover:shadow-[0_15px_50px_-10px_rgba(34,211,238,0.8)] 
+        hover:-translate-y-1 active:scale-95"
         onClick={startCreateNewLogic}
       >
-        <span className="mr-2 text-xl">(+)</span> 새 로직 추가하기
+        {/* 배경 애니메이션 효과 */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-600/0 via-purple-600/20 to-purple-600/0 group-hover:animate-shimmer"></div>
+        
+        <div className="relative z-10 flex items-center gap-3">
+          <span className="text-2xl transform group-hover:rotate-90 transition-transform duration-300">+</span>
+          <span>새 로직 추가하기</span>
+          <span className="text-sm opacity-70">( Double-click으로 빠른 편집 )</span>
+        </div>
       </button>
     </div>
   );

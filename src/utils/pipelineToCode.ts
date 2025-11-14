@@ -198,7 +198,8 @@ function nodeToCode(
     connectionIndex: Map<string, Map<string, ConnectionData>>,
     nodeMap: Map<string, NodeData>, 
     varName: string,
-    varNameMap: Map<string, string>
+    varNameMap: Map<string, string>,
+    logicId?: string
 ): string {
     
     // Helper: 연결된 소스 노드의 변수명 가져오기
@@ -226,8 +227,9 @@ function nodeToCode(
             // exportGraph는 이미 .value를 추출해서 controls에 저장함
             const fileName = node.controls?.fileName || 'data.csv'
             
-            // localStorage에서 실제 CSV 데이터 확인
-            const storedData = typeof window !== 'undefined' ? localStorage.getItem(`csv_data_${fileName}`) : null
+            // localStorage에서 실제 CSV 데이터 확인 (로직별로 분리된 데이터 사용)
+            const storageKey = logicId ? `csv_data_${logicId}_${fileName}` : `csv_data_global_${fileName}`
+            const storedData = typeof window !== 'undefined' ? localStorage.getItem(storageKey) : null
             
             if (storedData) {
                 // 실제 업로드된 CSV 데이터를 Base64로 인코딩하여 포함
@@ -514,7 +516,7 @@ function generateImports(nodes: NodeData[]): string {
 /**
  * 전체 파이프라인을 Python 코드로 변환
  */
-export function generatePythonCode(graph: GraphData): string {
+export function generatePythonCode(graph: GraphData, logicId?: string): string {
     if (!graph.nodes || graph.nodes.length === 0) {
         throw new PipelineValidationError('파이프라인에 노드가 없습니다.')
     }
@@ -555,7 +557,7 @@ export function generatePythonCode(graph: GraphData): string {
     // 각 노드를 코드로 변환
     const codeBlocks = sortedNodes.map(node => {
         const varName = varNameMap.get(node.id) || 'data'
-        return nodeToCode(node, connectionIndex, nodeMap, varName, varNameMap)
+        return nodeToCode(node, connectionIndex, nodeMap, varName, varNameMap, logicId)
     })
     
     // 전체 코드 조립
@@ -576,8 +578,8 @@ ${codeBlocks.join('\n\n')}
 /**
  * Jupyter Notebook JSON 생성
  */
-export function generateJupyterNotebook(graph: GraphData, pipelineName: string = 'ML Pipeline'): string {
-    const pythonCode = generatePythonCode(graph)
+export function generateJupyterNotebook(graph: GraphData, pipelineName: string = 'ML Pipeline', logicId?: string): string {
+    const pythonCode = generatePythonCode(graph, logicId)
     
     // 코드를 논리적 섹션으로 분할
     const sections = pythonCode.split('\n\n')
@@ -626,8 +628,8 @@ export function generateJupyterNotebook(graph: GraphData, pipelineName: string =
 /**
  * Python 스크립트 파일 생성 (.py)
  */
-export function generatePythonScript(graph: GraphData, pipelineName: string = 'ML Pipeline'): string {
-    const pythonCode = generatePythonCode(graph)
+export function generatePythonScript(graph: GraphData, pipelineName: string = 'ML Pipeline', logicId?: string): string {
+    const pythonCode = generatePythonCode(graph, logicId)
     
     const header = `"""
 ${pipelineName}
