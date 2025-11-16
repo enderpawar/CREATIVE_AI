@@ -154,3 +154,40 @@ export function validateCSV(content: string): { valid: boolean; error?: string }
         return { valid: false, error: '파일 형식이 올바르지 않습니다' }
     }
 }
+
+/**
+ * CSV 파일의 컬럼 헤더 추출
+ */
+export function getCSVColumns(fileName: string, logicId?: string): string[] {
+    const content = loadStoredCSV(fileName, logicId)
+    if (!content) return []
+    
+    try {
+        const lines = content.split('\n').filter(line => line.trim())
+        if (lines.length === 0) return []
+        
+        // 첫 번째 줄을 파싱하여 컬럼명 추출
+        const headerLine = lines[0]
+        const columns: string[] = []
+        let current = ''
+        let inQuotes = false
+        
+        for (let i = 0; i < headerLine.length; i++) {
+            const char = headerLine[i]
+            if (char === '"') {
+                inQuotes = !inQuotes
+            } else if (char === ',' && !inQuotes) {
+                columns.push(current.trim())
+                current = ''
+            } else {
+                current += char
+            }
+        }
+        columns.push(current.trim())
+        
+        return columns.filter(col => col.length > 0)
+    } catch (error) {
+        console.error('컬럼 추출 오류:', error)
+        return []
+    }
+}

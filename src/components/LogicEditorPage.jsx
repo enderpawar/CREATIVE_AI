@@ -879,7 +879,7 @@ ${userIntent}
                 </div>
 
                 {/* Gemini AI Python 코드 생성기 */}
-                <GeminiPipelineGenerator onApplyPipeline={applyPipelineToCanvas} />
+                <GeminiPipelineGenerator onApplyPipeline={applyPipelineToCanvas} logicId={logic?.id} />
                 
                 {/* CSV 데이터 관리 */}
                 <CSVDataManager 

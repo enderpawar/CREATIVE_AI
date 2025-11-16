@@ -5,13 +5,14 @@ import {
     getStoredGeminiApiKey,
     removeGeminiApiKey 
 } from '../utils/geminiPipeline';
+import { listStoredCSVFiles, getCSVColumns } from '../utils/csvHandler';
 import { useToast } from './toast/ToastProvider.jsx';
 import geminiIcon from '../assets/gemini-color.png';
 
 /**
- * Gemini API를 사용한 Python 코드 생성 컴포넌트
+ * Gemini API를 사용한 Python 코드 생성 컨포넌트
  */
-const GeminiPipelineGenerator = ({ onApplyPipeline }) => {
+const GeminiPipelineGenerator = ({ onApplyPipeline, logicId }) => {
     const toast = useToast();
     const [apiKey, setApiKey] = useState('');
     const [hasApiKey, setHasApiKey] = useState(false);
@@ -76,7 +77,30 @@ const GeminiPipelineGenerator = ({ onApplyPipeline }) => {
         setNodeGuide([]);
         
         try {
-            const result = await generatePythonCode(prompt);
+            // CSV 파일 및 컬럼 정보 수집
+            const uploadedFiles = listStoredCSVFiles(logicId);
+            let csvInfo = '';
+            
+            if (uploadedFiles.length > 0) {
+                csvInfo = '\n\n━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+                csvInfo += '📁 업로드된 CSV 파일 정보:\n';
+                csvInfo += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+                
+                uploadedFiles.forEach(fileName => {
+                    const columns = getCSVColumns(fileName, logicId);
+                    csvInfo += `\n📄 파일명: ${fileName}\n`;
+                    if (columns.length > 0) {
+                        csvInfo += `   컬럼 목록: ${columns.join(', ')}\n`;
+                        csvInfo += `   통계: 총 ${columns.length}개 컬럼\n`;
+                    }
+                });
+                
+                csvInfo += '\n⚠️ 중요: dataSplit 노드의 targetColumn은 반드시 위 컬럼 목록에 있는 정확한 컬럼명을 사용해야 합니다!\n';
+                csvInfo += '━━━━━━━━━━━━━━━━━━━━━━━━━━━\n';
+            }
+            
+            const enhancedPrompt = prompt + csvInfo;
+            const result = await generatePythonCode(enhancedPrompt);
             setGeneratedCode(result.code);
             setNodeGuide(result.nodeGuide || []);
             toast.success('코드가 생성되었습니다!');

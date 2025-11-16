@@ -87,6 +87,11 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
                 detail: { logicId, files: listStoredCSVFiles(logicId) } 
             }));
             
+            // 커스텀 이벤트 발생 - DataSplit 노드가 컬럼 목록을 업데이트하도록
+            window.dispatchEvent(new CustomEvent('csv-columns-updated', {
+                detail: { logicId, fileName: csvData.fileName }
+            }));
+            
             // 부모 컴포넌트에 알림
             if (onSelectFile) {
                 onSelectFile(csvData.fileName);
@@ -111,6 +116,11 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
             // 커스텀 이벤트 발생
             window.dispatchEvent(new CustomEvent('csv-files-updated', { 
                 detail: { logicId, files: updatedFiles } 
+            }));
+            
+            // 커스텀 이벤트 발생 - 컬럼 목록 업데이트
+            window.dispatchEvent(new CustomEvent('csv-columns-updated', {
+                detail: { logicId, fileName: null }
             }));
         }
     }, [selectedFile, toast, logicId]);
@@ -170,6 +180,11 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
         if (onSelectFile) {
             onSelectFile(fileName);
         }
+        
+        // 커스텀 이벤트 발생 - 컬럼 목록 업데이트
+        window.dispatchEvent(new CustomEvent('csv-columns-updated', {
+            detail: { logicId, fileName }
+        }));
     }, [onSelectFile, toast, logicId]);
 
     return (

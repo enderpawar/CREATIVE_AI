@@ -11,7 +11,7 @@ import { CustomSocket } from '../customization/CustomSocket'
 import { CustomConnection } from '../customization/CustomConnection'
 import { SelectControl, SelectControlComponent } from '../customization/SelectControl.tsx'
 import { addCustomBackground } from '../customization/custom-background'
-import { listStoredCSVFiles } from '../utils/csvHandler'
+import { listStoredCSVFiles, getCSVColumns } from '../utils/csvHandler'
 import '../customization/background.css'
 
 // 현재 로직 ID를 저장하는 전역 변수
@@ -129,18 +129,67 @@ export class DataLoaderNode extends TradeNode {
 }
 
 export class DataSplitNode extends TradeNode {
+    private updateColumnsListener: ((event: any) => void) | null = null
+
     constructor() {
         super('Data Split')
         this.addInput('data', new ClassicPreset.Input(numberSocket, '데이터'))
         this.addOutput('train', new ClassicPreset.Output(numberSocket, '훈련용'))
         this.addOutput('test', new ClassicPreset.Output(numberSocket, '테스트용'))
-        this.addControl('targetColumn', new ClassicPreset.InputControl('text', { initial: 'target' }))
+        
+        // 초기 타겟 컬럼 컨트롤 (드롭다운으로 시작)
+        this.updateTargetColumnControl()
+        
         this.addControl('ratio', new ClassicPreset.InputControl('number', { initial: 0.8 }))
         this.kind = 'dataSplit'
         this.category = 'ml-preprocessing'
         this._controlHints = {
             targetColumn: { label: '타겟 컬럼', title: '예측할 목표 변수의 컬럼명' },
             ratio: { label: '학습 비율', title: '학습 데이터 비율 (0~1)' }
+        }
+
+        // CSV 파일 업데이트 이벤트 리스너
+        this.updateColumnsListener = () => {
+            this.updateTargetColumnControl()
+        }
+        window.addEventListener('csv-files-updated', this.updateColumnsListener)
+        window.addEventListener('csv-columns-updated', this.updateColumnsListener)
+    }
+
+    private updateTargetColumnControl() {
+        // 기존 컨트롤 제거
+        if (this.controls.targetColumn) {
+            delete this.controls.targetColumn
+        }
+
+        // 모든 CSV 파일의 컬럼 수집
+        const uploadedFiles = listStoredCSVFiles(currentLogicId)
+        const allColumns = new Set<string>()
+        
+        uploadedFiles.forEach(fileName => {
+            const columns = getCSVColumns(fileName, currentLogicId)
+            columns.forEach(col => allColumns.add(col))
+        })
+
+        if (allColumns.size > 0) {
+            // 컬럼이 있으면 드롭다운
+            const columnOptions = Array.from(allColumns).map(col => ({
+                value: col,
+                label: col
+            }))
+            columnOptions.unshift({ value: '', label: '🎯 타겟 컬럼 선택...' })
+            
+            this.addControl('targetColumn', new SelectControl(columnOptions, ''))
+        } else {
+            // 컬럼이 없으면 텍스트 입력
+            this.addControl('targetColumn', new ClassicPreset.InputControl('text', { initial: 'target' }))
+        }
+    }
+
+    destroy() {
+        if (this.updateColumnsListener) {
+            window.removeEventListener('csv-files-updated', this.updateColumnsListener)
+            window.removeEventListener('csv-columns-updated', this.updateColumnsListener)
         }
     }
 }
