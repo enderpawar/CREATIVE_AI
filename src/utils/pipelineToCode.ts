@@ -209,14 +209,6 @@ function nodeToCode(
         return varNameMap.get(conn.source) || 'data'
     }
     
-    // Helper: 연결된 소스 노드의 출력 변수명 가져오기
-    const getSourceOutputVar = (inputKey: string): string => {
-        const conn = connectionIndex.get(node.id)?.get(inputKey)
-        if (!conn) return 'data'
-        const sourceVarName = varNameMap.get(conn.source) || 'data'
-        return `${sourceVarName}_${conn.sourceOutput}`
-    }
-    
     // Helper: 연결 확인
     const getConnection = (inputKey: string): ConnectionData | undefined => {
         return connectionIndex.get(node.id)?.get(inputKey)
