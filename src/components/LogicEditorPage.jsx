@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useToast } from './toast/ToastProvider.jsx';
 import { useReteAppEditor } from '../hooks/useReteAppEditor';
 import { createNodeByKind, clientToWorld, exportGraph, importGraph, setCurrentLogicId } from '../rete/app-editor';
+import { ClassicPreset } from 'rete';
 import { loadLogic as loadLogicFromStorage } from '../utils/logicStorage';
 import { generatePythonCode, generateJupyterNotebook, generatePythonScript } from '../utils/pipelineToCode';
 import { enhanceCodeWithAI } from '../utils/geminiPipeline';
@@ -388,6 +389,8 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 return;
             }
 
+            console.log('📥 Received pipeline:', pipeline);
+
             // ✅ 파이프라인 검증
             const validationErrors = validatePipeline(pipeline);
             if (validationErrors.length > 0) {
@@ -396,27 +399,100 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 return;
             }
 
+            // ⚠️ 캔버스 초기화 (기존 노드 제거)
+            console.log('🧹 Clearing canvas...');
+            await editor.clear();
+
             // 노드 ID와 Rete 노드 객체 매핑
             const nodeMap = new Map();
+            
+            // 소켓 이름 매핑 테이블 (Gemini 출력 → Rete 실제 소켓)
+            const socketNameMapping = {
+                // 한국어 입력/출력 소켓
+                '데이터': 'data',
+                '훈련용': 'train',
+                '테스트용': 'test',
+                '모델': 'model',
+                '예측결과': 'prediction',
+                '평가결과': 'metrics',
+                
+                // 영어 소켓 (있는 그대로)
+                'data': 'data',
+                'train': 'train',
+                'test': 'test',
+                'model': 'model',
+                'prediction': 'prediction',
+                'metrics': 'metrics',
+                
+                // 추가 가능한 변형들
+                '데이타': 'data',
+                '훈련': 'train',
+                '테스트': 'test',
+                '모델링': 'model',
+                '예측': 'prediction',
+                '평가': 'metrics'
+            };
+            
+            // 소켓 이름 정규화 함수 (유연한 매칭)
+            const normalizeSocketName = (name, availableSockets) => {
+                if (!name) return null;
+                
+                // 1. 정확한 매칭 (대소문자 구분 없이)
+                const exactMatch = availableSockets.find(s => 
+                    s.toLowerCase() === name.toLowerCase()
+                );
+                if (exactMatch) return exactMatch;
+                
+                // 2. 매핑 테이블 사용
+                const mappedName = socketNameMapping[name] || socketNameMapping[name.toLowerCase()];
+                if (mappedName) {
+                    const match = availableSockets.find(s => 
+                        s.toLowerCase() === mappedName.toLowerCase()
+                    );
+                    if (match) return match;
+                }
+                
+                // 3. 부분 문자열 매칭 (마지막 수단)
+                const partialMatch = availableSockets.find(s => 
+                    s.toLowerCase().includes(name.toLowerCase()) ||
+                    name.toLowerCase().includes(s.toLowerCase())
+                );
+                if (partialMatch) return partialMatch;
+                
+                return null;
+            };
 
             // 1. 모든 노드 생성
-            for (const nodeData of pipeline.nodes) {
+            console.log('🔨 Creating nodes...');
+            for (let i = 0; i < pipeline.nodes.length; i++) {
+                const nodeData = pipeline.nodes[i];
                 // nodeType 또는 type 속성 모두 지원
                 const nodeType = nodeData.nodeType || nodeData.type || nodeData.kind;
+                console.log(`Creating node: ${nodeType}`, nodeData);
+                
                 const node = createNodeByKind(nodeType);
                 
                 if (!node) {
-                    console.error(`노드 타입을 찾을 수 없습니다: ${nodeType}`);
+                    console.error(`❌ 노드 타입을 찾을 수 없습니다: ${nodeType}`);
                     continue;
                 }
 
                 // 컨트롤 값 설정
                 if (nodeData.controls || nodeData.settings) {
                     const settings = nodeData.controls || nodeData.settings;
+                    console.log(`⚙️ Setting controls for ${nodeType}:`, settings);
+                    
                     for (const [key, value] of Object.entries(settings)) {
                         const control = node.controls[key];
                         if (control) {
-                            control.setValue(value);
+                            if (typeof control.setValue === 'function') {
+                                control.setValue(value);
+                            } else if ('value' in control) {
+                                control.value = value;
+                            }
+                            console.log(`  ✓ ${key} = ${value}`);
+                        } else {
+                            console.warn(`  ⚠️ Control not found: ${key}`);
                         }
                     }
                 }
@@ -424,132 +500,94 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 // 노드를 에디터에 추가
                 await editor.addNode(node);
                 
-                // 위치 설정
-                if (nodeData.position) {
-                    await area.translate(node.id, nodeData.position);
-                }
+                // 위치 설정 (가로 방향으로 배치)
+                const position = nodeData.position || { 
+                    x: 100 + i * 300,  // 가로로 300px 간격
+                    y: 150 
+                };
+                await area.translate(node.id, position);
                 
                 // 매핑 저장 (원본 ID 사용)
                 const originalId = nodeData.id || `node-${nodeData.step}`;
                 nodeMap.set(originalId, node);
+                
+                console.log(`✅ Node created: ${node.label} (ID: ${node.id})`);
+                console.log(`  Inputs:`, Object.keys(node.inputs || {}));
+                console.log(`  Outputs:`, Object.keys(node.outputs || {}));
             }
-
 
             // 2. 연결 생성
             const connections = Array.isArray(pipeline.connections) ? pipeline.connections : [];
-            console.log('Pipeline connections:', connections);
-            console.log('Node map:', nodeMap);
+            console.log(`🔗 Creating ${connections.length} connections...`);
             
-            // ✅ 성능 최적화: 소켓 이름 캐시
-            const socketCache = new Map();
-            const getSocketKey = (node, socketName, isOutput) => {
-                const cacheKey = `${node.id}_${isOutput ? 'out' : 'in'}_${socketName}`;
+            // 중복 연결 체크용
+            const existingConnections = new Set();
+            
+            for (const conn of connections) {
+                const sourceNode = nodeMap.get(conn.source);
+                const targetNode = nodeMap.get(conn.target);
                 
-                if (socketCache.has(cacheKey)) {
-                    return socketCache.get(cacheKey);
+                if (!sourceNode || !targetNode) {
+                    console.error(`❌ 노드를 찾을 수 없습니다: ${conn.source} -> ${conn.target}`);
+                    console.log('Available nodes:', Array.from(nodeMap.keys()));
+                    continue;
                 }
                 
-                const sockets = isOutput ? node.outputs : node.inputs;
-                const socketKey = Object.keys(sockets).find(k => 
-                    k.toLowerCase() === socketName.toLowerCase()
-                );
+                console.log(`\n🔗 Connecting: ${sourceNode.label} -> ${targetNode.label}`);
+                console.log(`  Source output: "${conn.sourceOutput}"`);
+                console.log(`  Target input: "${conn.targetInput}"`);
                 
-                if (socketKey) {
-                    socketCache.set(cacheKey, socketKey);
+                // 사용 가능한 소켓 목록
+                const availableOutputs = Object.keys(sourceNode.outputs || {});
+                const availableInputs = Object.keys(targetNode.inputs || {});
+                
+                console.log(`  Available outputs:`, availableOutputs);
+                console.log(`  Available inputs:`, availableInputs);
+                
+                // 소켓 이름 정규화
+                const outputKey = normalizeSocketName(conn.sourceOutput, availableOutputs);
+                const inputKey = normalizeSocketName(conn.targetInput, availableInputs);
+                
+                if (!outputKey) {
+                    console.error(`❌ 출력 소켓을 찾을 수 없습니다: "${conn.sourceOutput}"`);
+                    console.log(`  Tried to match with:`, availableOutputs);
+                    continue;
                 }
                 
-                return socketKey;
-            };
-            
-            // 기존 연결 확인 함수 (더 강력한 체크)
-            const connectionExists = (srcId, srcOut, tgtId, tgtIn) => {
+                if (!inputKey) {
+                    console.error(`❌ 입력 소켓을 찾을 수 없습니다: "${conn.targetInput}"`);
+                    console.log(`  Tried to match with:`, availableInputs);
+                    continue;
+                }
+                
+                console.log(`  ✓ Matched: ${outputKey} -> ${inputKey}`);
+                
+                // 중복 연결 체크
+                const connKey = `${sourceNode.id}:${outputKey}->${targetNode.id}:${inputKey}`;
+                if (existingConnections.has(connKey)) {
+                    console.warn(`⚠️ 중복 연결 무시: ${connKey}`);
+                    continue;
+                }
+                
                 try {
-                    const existingConns = editor.getConnections();
-                    return existingConns.some(conn => 
-                        conn.source === srcId && 
-                        conn.sourceOutput === srcOut && 
-                        conn.target === tgtId && 
-                        conn.targetInput === tgtIn
+                    const connection = new ClassicPreset.Connection(
+                        sourceNode,
+                        outputKey,
+                        targetNode,
+                        inputKey
                     );
-                } catch (e) {
-                    console.warn('연결 체크 중 오류:', e);
-                    return false;
-                }
-            };
-            
-            // 연결 추가 시도 (중복 에러 무시)
-            const tryAddConnection = async (source, sourceOutput, target, targetInput) => {
-                // 이미 존재하는 연결인지 확인
-                if (connectionExists(source, sourceOutput, target, targetInput)) {
-                    console.warn(`⚠️ Connection already exists: ${source} (${sourceOutput}) -> ${target} (${targetInput})`);
-                    return false;
-                }
-                
-                try {
-                    await editor.addConnection({
-                        source,
-                        sourceOutput,
-                        target,
-                        targetInput
-                    });
-                    console.log(`✅ Connected: ${source} (${sourceOutput}) -> ${target} (${targetInput})`);
-                    return true;
+                    
+                    await editor.addConnection(connection);
+                    
+                    existingConnections.add(connKey);
+                    console.log(`✅ Connected successfully!`);
                 } catch (err) {
-                    // "connection has already been added" 에러는 무시
-                    if (err.message && err.message.includes('already been added')) {
-                        console.warn(`⚠️ Connection already exists (caught): ${source} -> ${target}`);
-                        return false;
-                    }
-                    console.error('Connection error:', err);
-                    return false;
-                }
-            };
-            
-            if (connections.length > 0) {
-                console.log('Creating connections from pipeline...');
-                for (const conn of connections) {
-                    const sourceNode = nodeMap.get(conn.source);
-                    const targetNode = nodeMap.get(conn.target);
-                    
-                    if (!sourceNode || !targetNode) {
-                        console.error(`노드를 찾을 수 없습니다: ${conn.source} -> ${conn.target}`);
-                        continue;
-                    }
-                    
-                    console.log(`Source node (${conn.source}) outputs:`, Object.keys(sourceNode.outputs));
-                    console.log(`Target node (${conn.target}) inputs:`, Object.keys(targetNode.inputs));
-                    console.log(`Trying to connect: ${conn.sourceOutput} -> ${conn.targetInput}`);
-                    
-                    // ✅ 캐시된 소켓 조회 사용
-                    const outputKey = getSocketKey(sourceNode, conn.sourceOutput, true);
-                    const inputKey = getSocketKey(targetNode, conn.targetInput, false);
-                    
-                    if (!outputKey || !inputKey) {
-                        console.error(`소켓을 찾을 수 없습니다: ${conn.sourceOutput} (${outputKey}) -> ${conn.targetInput} (${inputKey})`);
-                        continue;
-                    }
-                    
-                    // 연결 시도
-                    await tryAddConnection(sourceNode.id, outputKey, targetNode.id, inputKey);
-                }
-            } else {
-                // connections가 없으면 노드 순서대로 자동 연결 (출력→입력 1:1)
-                console.log('No connections provided, auto-connecting nodes...');
-                const nodeArr = Array.from(nodeMap.values());
-                for (let i = 0; i < nodeArr.length - 1; i++) {
-                    const src = nodeArr[i];
-                    const dst = nodeArr[i + 1];
-                    
-                    console.log(`Source node outputs:`, Object.keys(src.outputs));
-                    console.log(`Target node inputs:`, Object.keys(dst.inputs));
-                    
-                    // 첫 번째 출력, 첫 번째 입력 자동 연결
-                    const srcOut = Object.keys(src.outputs)[0];
-                    const dstIn = Object.keys(dst.inputs)[0];
-                    
-                    if (srcOut && dstIn) {
-                        // 연결 시도
-                        await tryAddConnection(src.id, srcOut, dst.id, dstIn);
+                    const errorMsg = err.message || String(err);
+                    if (errorMsg.includes('already been added')) {
+                        console.warn(`⚠️ Connection already exists (Rete internal check)`);
+                    } else {
+                        console.error(`❌ Connection error:`, errorMsg);
+                        console.error('Full error:', err);
                     }
                 }
             }
@@ -557,12 +595,16 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             // 화면 업데이트
             await area.area.update();
             
-            toast.success(`${pipeline.nodes.length}개의 노드가 추가되었습니다!`);
+            const nodeCount = pipeline.nodes.length;
+            const connCount = existingConnections.size;
+            toast.success(`✨ ${nodeCount}개 노드와 ${connCount}개 연결이 추가되었습니다!`);
+            
+            console.log('🎉 Pipeline applied successfully!');
         } catch (error) {
-            console.error('파이프라인 적용 오류:', error);
+            console.error('❌ 파이프라인 적용 오류:', error);
             toast.error('파이프라인을 캔버스에 적용하는 중 오류가 발생했습니다.');
         }
-    }, [editorRef, areaRef, toast]);
+    }, [editorRef, areaRef, toast, validatePipeline]);
 
   return (
     <div className="w-full max-w-[2400px] p-4 sm:p-6 lg:p-8 rounded-3xl shadow-2xl flex flex-col bg-neutral-950 text-gray-200 border border-neutral-800/70">

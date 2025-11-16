@@ -292,22 +292,44 @@ const GeminiPipelineGenerator = ({ onApplyPipeline }) => {
                             marginBottom: '15px'
                         }}
                     >
-                        {isGenerating ? '🔄 생성 중...' : '✨ AI로 코드 생성하기'}
+                        {isGenerating ? '🔄 생성 중...' : '✨ AI로 노드 가이드 생성하기'}
                     </button>
 
-                    {/* 캔버스에 적용 버튼
+                    {/* 캔버스에 적용 버튼 */}
                     {nodeGuide.length > 0 && onApplyPipeline && (
                         <button
                             onClick={() => {
-                                onApplyPipeline({ nodes: nodeGuide, connections: nodeGuide.flatMap(g => 
-                                    (g.connections?.from || []).map(c => ({
-                                        source: nodeGuide.find(n => n.step === c.step)?.id,
-                                        sourceOutput: c.output,
-                                        target: g.id,
-                                        targetInput: c.input
-                                    }))
-                                ).filter(c => c.source) });
-                                toast.success('파이프라인이 캔버스에 적용되었습니다!');
+                                // NodeGuide를 파이프라인 형식으로 변환
+                                const pipeline = {
+                                    nodes: nodeGuide.map(guide => ({
+                                        id: `node-${guide.step}`,
+                                        step: guide.step,
+                                        kind: guide.nodeType,
+                                        type: guide.nodeType,
+                                        nodeType: guide.nodeType,
+                                        controls: guide.settings || {},
+                                        settings: guide.settings || {}
+                                        // position은 LogicEditorPage에서 자동 계산됨
+                                    })),
+                                    connections: []
+                                };
+
+                                // 연결 정보 생성
+                                nodeGuide.forEach(guide => {
+                                    if (guide.connections?.from) {
+                                        guide.connections.from.forEach(conn => {
+                                            pipeline.connections.push({
+                                                source: `node-${conn.step}`,
+                                                sourceOutput: conn.output,
+                                                target: `node-${guide.step}`,
+                                                targetInput: conn.input
+                                            });
+                                        });
+                                    }
+                                });
+
+                                console.log('Generated pipeline:', pipeline);
+                                onApplyPipeline(pipeline);
                             }}
                             style={{
                                 width: '100%',
@@ -320,12 +342,17 @@ const GeminiPipelineGenerator = ({ onApplyPipeline }) => {
                                 borderRadius: '6px',
                                 cursor: 'pointer',
                                 transition: 'background-color 0.2s',
-                                marginBottom: '15px'
+                                marginBottom: '15px',
+                                boxShadow: '0 4px 6px rgba(16, 185, 129, 0.3)',
+                                position: 'relative',
+                                overflow: 'hidden'
                             }}
+                            onMouseOver={(e) => e.currentTarget.style.backgroundColor = '#059669'}
+                            onMouseOut={(e) => e.currentTarget.style.backgroundColor = '#10b981'}
                         >
-                            🎨 캔버스에 적용하기
+                            🎨 캔버스에 자동 배치하기
                         </button>
-                    )} */}
+                    )}
 
                     {/* 노드 배치 가이드 */}
                     {nodeGuide.length > 0 && (

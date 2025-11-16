@@ -62,68 +62,76 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
 }
 \`\`\`
 
-**📋 사용 가능한 노드 타입 (v4.0 단순화 버전)**:
+**📋 사용 가능한 노드 타입 및 정확한 소켓 이름**:
+
+⚠️ **중요**: 소켓 이름은 아래 표시된 **정확한 영문 이름**을 사용해야 합니다!
 
 1. **dataLoader** - "Data Loader (데이터 로더)"
    - 입력: 없음
-   - 출력: **데이터**
+   - 출력: **data** (정확한 이름: "data")
    - settings: { fileName: "파일명.csv" }
 
 2. **dataSplit** - "Data Split (데이터 분할)"
-   - 입력: **데이터**
-   - 출력: **훈련용**, **테스트용** (2개만!)
+   - 입력: **data** (정확한 이름: "data")
+   - 출력: **train**, **test** (정확한 이름: "train", "test")
    - settings: { ratio: 0.8, targetColumn: "컬럼명" }
-   - 💡 중요: 내부적으로 X_train, y_train, X_test, y_test를 생성하지만, 사용자에게는 "훈련용"/"테스트용"으로만 표시됩니다
+   - 💡 중요: 출력은 정확히 "train"과 "test"입니다
 
 3. **scaler** - "Scaler (정규화)"
-   - 입력: **데이터**
-   - 출력: **데이터**
+   - 입력: **data** (정확한 이름: "data")
+   - 출력: **data** (정확한 이름: "data")
    - settings: { method: "StandardScaler" 또는 "MinMaxScaler" }
    - 💡 훈련용 데이터를 정규화합니다
 
 4. **featureSelection** - "Feature Selection (피처 선택)"
-   - 입력: **데이터**
-   - 출력: **데이터**
+   - 입력: **data** (정확한 이름: "data")
+   - 출력: **data** (정확한 이름: "data")
    - settings: { method: "SelectKBest", k: 10 }
    - 💡 훈련용 데이터에서 중요한 특성만 선택합니다
 
 5. **classifier** - "Classifier (분류 모델)"
-   - 입력: **훈련용**
-   - 출력: **모델**
+   - 입력: **train** (정확한 이름: "train")
+   - 출력: **model** (정확한 이름: "model")
    - settings: { algorithm: "RandomForest", n_estimators: 100 }
    - 💡 훈련용 데이터로 분류 모델을 학습시킵니다
 
 6. **regressor** - "Regressor (회귀 모델)"
-   - 입력: **훈련용**
-   - 출력: **모델**
+   - 입력: **train** (정확한 이름: "train")
+   - 출력: **model** (정확한 이름: "model")
    - settings: { algorithm: "LinearRegression" }
    - 💡 훈련용 데이터로 회귀 모델을 학습시킵니다
 
 7. **neuralNet** - "Neural Network (신경망)"
-   - 입력: **훈련용**
-   - 출력: **모델**
+   - 입력: **train** (정확한 이름: "train")
+   - 출력: **model** (정확한 이름: "model")
    - settings: { layers: "64,32", epochs: 50 }
    - 💡 훈련용 데이터로 신경망을 학습시킵니다
 
 8. **hyperparamTune** - "Hyperparameter Tuning (하이퍼파라미터 튜닝)"
-   - 입력: **훈련용**
-   - 출력: **모델**
+   - 입력: **train** (정확한 이름: "train")
+   - 출력: **model** (정확한 이름: "model")
    - settings: {}
    - 💡 최적의 설정값을 찾아 모델을 학습시킵니다
 
 9. **predict** - "Predict (예측)"
-   - 입력: **모델**, **테스트용**
-   - 출력: **예측결과**
+   - 입력: **model**, **test** (정확한 이름: "model", "test")
+   - 출력: **prediction** (정확한 이름: "prediction")
    - settings: {}
    - 💡 학습된 모델로 테스트 데이터에 대한 예측을 수행합니다
 
 10. **evaluate** - "Evaluate (모델 평가)"
-   - 입력: **예측결과**, **테스트용**
-   - 출력: **평가결과**
+   - 입력: **prediction**, **test** (정확한 이름: "prediction", "test")
+   - 출력: **metrics** (정확한 이름: "metrics")
    - settings: {}
    - 💡 예측 결과의 정확도를 측정합니다
 
-**완전한 예시 - 아이리스 분류 (v4.0 단순화 버전)**:
+**⚠️ 소켓 연결 규칙 (매우 중요!)**:
+- 모든 소켓 이름은 **정확한 영문 이름**을 사용하세요: data, train, test, model, prediction, metrics
+- 한글 이름(데이터, 훈련용 등)은 사용하지 마세요
+- 예시: { "step": 2, "output": "data", "input": "data" } ✅
+- 잘못된 예시: { "step": 2, "output": "데이터", "input": "데이터" } ❌
+
+**완전한 예시 - 아이리스 분류 (정확한 소켓 이름 사용)**:
 \`\`\`json
 {
   "code": "# 필요한 라이브러리 import\\nimport pandas as pd\\nimport numpy as np\\nfrom sklearn.model_selection import train_test_split\\nfrom sklearn.preprocessing import StandardScaler\\nfrom sklearn.ensemble import RandomForestClassifier\\nfrom sklearn.metrics import accuracy_score, classification_report\\n\\n# 1. 데이터 로딩\\ndf = pd.read_csv('iris.csv')\\n\\n# 2. 데이터 분할\\nX = df.drop('species', axis=1)\\ny = df['species']\\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)\\n\\n# 3. 정규화\\nscaler = StandardScaler()\\nX_train = scaler.fit_transform(X_train)\\nX_test = scaler.transform(X_test)\\n\\n# 4. 모델 훈련\\nmodel = RandomForestClassifier(n_estimators=100, random_state=42)\\nmodel.fit(X_train, y_train)\\n\\n# 5. 예측\\ny_pred = model.predict(X_test)\\n\\n# 6. 평가\\naccuracy = accuracy_score(y_test, y_pred)\\nprint(f'정확도: {accuracy:.4f}')\\nprint(classification_report(y_test, y_pred))",
@@ -140,7 +148,7 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
       "connections": {
         "from": [],
         "to": [
-          { "step": 2, "output": "데이터", "input": "데이터" }
+          { "step": 2, "output": "data", "input": "data" }
         ]
       }
     },
@@ -156,11 +164,11 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
       },
       "connections": {
         "from": [
-          { "step": 1, "output": "데이터", "input": "데이터" }
+          { "step": 1, "output": "data", "input": "data" }
         ],
         "to": [
-          { "step": 3, "output": "훈련용", "input": "데이터" },
-          { "step": 5, "output": "테스트용", "input": "테스트용" }
+          { "step": 3, "output": "train", "input": "data" },
+          { "step": 5, "output": "test", "input": "test" }
         ]
       }
     },
@@ -175,10 +183,10 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
       },
       "connections": {
         "from": [
-          { "step": 2, "output": "훈련용", "input": "데이터" }
+          { "step": 2, "output": "train", "input": "data" }
         ],
         "to": [
-          { "step": 4, "output": "데이터", "input": "훈련용" }
+          { "step": 4, "output": "data", "input": "train" }
         ]
       }
     },
@@ -194,10 +202,10 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
       },
       "connections": {
         "from": [
-          { "step": 3, "output": "데이터", "input": "훈련용" }
+          { "step": 3, "output": "data", "input": "train" }
         ],
         "to": [
-          { "step": 5, "output": "모델", "input": "모델" }
+          { "step": 5, "output": "model", "input": "model" }
         ]
       }
     },
@@ -210,11 +218,11 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
       "settings": {},
       "connections": {
         "from": [
-          { "step": 4, "output": "모델", "input": "모델" },
-          { "step": 2, "output": "테스트용", "input": "테스트용" }
+          { "step": 4, "output": "model", "input": "model" },
+          { "step": 2, "output": "test", "input": "test" }
         ],
         "to": [
-          { "step": 6, "output": "예측결과", "input": "예측결과" }
+          { "step": 6, "output": "prediction", "input": "prediction" }
         ]
       }
     },
@@ -227,8 +235,8 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
       "settings": {},
       "connections": {
         "from": [
-          { "step": 5, "output": "예측결과", "input": "예측결과" },
-          { "step": 2, "output": "테스트용", "input": "테스트용" }
+          { "step": 5, "output": "prediction", "input": "prediction" },
+          { "step": 2, "output": "test", "input": "test" }
         ],
         "to": []
       }
@@ -237,25 +245,26 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
 }
 \`\`\`
 
-**🔑 핵심 연결 규칙**:
-- Data Split의 **훈련용** → Scaler/FeatureSelection → Classifier/Regressor/NeuralNet
-- Data Split의 **테스트용** → Predict의 테스트용 / Evaluate의 테스트용
-- 모델 노드(Classifier/Regressor)의 **모델** → Predict의 모델
-- Predict의 **예측결과** → Evaluate의 예측결과
+**🔑 핵심 연결 규칙 (정확한 소켓 이름 사용!)**:
+- dataLoader의 **data** → dataSplit의 **data**
+- dataSplit의 **train** → Scaler/FeatureSelection → Classifier/Regressor/NeuralNet
+- dataSplit의 **test** → Predict의 **test** / Evaluate의 **test**
+- 모델 노드(Classifier/Regressor)의 **model** → Predict의 **model**
+- Predict의 **prediction** → Evaluate의 **prediction**
 
-**연결 정보 작성 방법**:
+**연결 정보 작성 방법 (정확한 소켓 이름 필수!)**:
 - **from**: 이 노드의 입력 소켓에 연결될 이전 노드들
   - step: 이전 노드의 단계 번호
-  - output: 이전 노드의 출력 소켓 이름
-  - input: 현재 노드의 입력 소켓 이름
+  - output: 이전 노드의 출력 소켓 이름 (영문: data, train, test, model, prediction)
+  - input: 현재 노드의 입력 소켓 이름 (영문: data, train, test, model, prediction)
 - **to**: 이 노드의 출력 소켓이 연결될 다음 노드들
   - step: 다음 노드의 단계 번호
-  - output: 현재 노드의 출력 소켓 이름
-  - input: 다음 노드의 입력 소켓 이름
+  - output: 현재 노드의 출력 소켓 이름 (영문: data, train, test, model, prediction)
+  - input: 다음 노드의 입력 소켓 이름 (영문: data, train, test, model, prediction)
 
 **💡 가이드 작성 팁**:
 - **reason 필드는 필수**: 각 노드가 왜 필요한지 초보자 눈높이로 설명 (전문 용어 최소화)
-- **소켓 이름은 한국어**: "훈련용", "테스트용", "모델", "예측결과", "데이터" 사용
+- **⚠️ 소켓 이름은 반드시 영문 사용**: data, train, test, model, prediction, metrics
 - **연결은 명확하게**: from/to 모두 작성하여 사용자가 어떻게 연결해야 하는지 정확히 알 수 있도록
 
 이제 사용자 요구사항에 맞는 Python 코드와 **초보자를 위한 상세한** 노드 가이드를 JSON 형식으로 생성해주세요.

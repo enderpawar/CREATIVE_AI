@@ -90,9 +90,9 @@ const LogicListPage = ({
 
   // 메인 페이지
   return (
-    <div className="w-full max-w-6xl p-8 rounded-3xl shadow-2xl themed-card border border-neutral-800/70 animate-fadeIn">
+    <div className="w-full max-w-6xl p-8 rounded-3xl shadow-2xl themed-card border border-neutral-800/70 animate-fadeIn flex flex-col" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
       {/* 헤더 카드 - 그라디언트 배경과 글로우 효과 */}
-      <div className="relative p-6 mb-6 rounded-2xl themed-card border border-neutral-800/70 overflow-hidden">
+      <div className="relative p-6 mb-6 rounded-2xl themed-card border border-neutral-800/70 overflow-hidden flex-shrink-0">
         {/* 배경 그라디언트 효과 */}
         <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-purple-500/5 pointer-events-none"></div>
         <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -154,7 +154,7 @@ const LogicListPage = ({
       </div>
 
       {/* 최근 활동 타임라인 */}
-      <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="mb-6 grid grid-cols-1 lg:grid-cols-3 gap-6 flex-shrink-0">
         {/* 타임라인 (2/3) */}
         <div className="lg:col-span-2 p-6 rounded-2xl themed-card border border-neutral-800/70 relative overflow-hidden">
           {/* 배경 그라디언트 */}
@@ -322,8 +322,10 @@ const LogicListPage = ({
         </div>
       </div>
 
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="logic-list" renderClone={(provided, snapshot, rubric) => {
+      {/* 로직 목록 영역 - 스크롤 가능 */}
+      <div className="flex-1 overflow-y-auto pr-2 mb-6" style={{ minHeight: '300px' }}>
+        <DragDropContext onDragEnd={handleDragEnd}>
+          <Droppable droppableId="logic-list" renderClone={(provided, snapshot, rubric) => {
           const logic = filteredLogics[rubric.source.index];
           return (
             <div
@@ -488,7 +490,8 @@ const LogicListPage = ({
             </div>
           )}
         </Droppable>
-      </DragDropContext>
+        </DragDropContext>
+      </div>
       
       {/* 새 로직 추가 버튼 - 개선된 디자인 */}
       <button
