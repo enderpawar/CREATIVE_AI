@@ -633,6 +633,17 @@ export async function createAppEditor(container: HTMLElement): Promise<{
             window.addEventListener('pointerup', onUp, true)
             return
         }
+
+        // 3) 빈 영역 클릭: 선택 해제 및 마퀴 윤곽선 숨김
+        if (!node && !e.shiftKey) {
+            selectedNodeIds.clear()
+            applySelectionOutline()
+            // 마퀴 윤곽선도 숨김
+            marquee.style.display = 'none'
+            marquee.style.width = '0px'
+            marquee.style.height = '0px'
+        }
+        
         // 그 외 기본 동작(단일 노드 드래그/캔버스 동작)은 통과
     }
     container.addEventListener('pointerdown', onPointerDownCapture, { capture: true })

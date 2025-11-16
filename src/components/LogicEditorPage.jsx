@@ -610,7 +610,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
         {/* 메인 컨텐츠: 왼쪽 노드 목록 + 중앙 캔버스 2영역 + 오른쪽 정보 패널 */}
         <div className="flex mt-4 gap-6 pb-8">
             {/* 1. RETE 노드 (왼쪽 사이드바) */}
-            <div className="w-1/5 p-4 bg-neutral-900/60 rounded-2xl border border-neutral-800/70 flex flex-col text-center gap-7 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+            <div className="w-[15%] p-4 bg-neutral-900/60 rounded-2xl border border-neutral-800/70 flex flex-col text-center gap-7 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
                 {[
                     { 
                         title: '📊 Data Source', 
@@ -713,13 +713,14 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             </div>
 
             {/* 2. 노드 설정 공간 (중앙 캔버스) */}
-            <div className="w-3/5 rounded-2xl border border-neutral-800/70 bg-neutral-900/40" style={{ height: 'calc(100vh - 200px)' }}>
+            <div className="w-[73%] rounded-2xl border border-neutral-800/70 bg-neutral-900/40" style={{ height: 'calc(100vh - 200px)' }}>
                 <div
                     ref={canvasRef}
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => handleDropOn(e)}
-                    className="w-full h-full relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.03),_transparent_60%)]"
+                    className="w-full h-full relative overflow-hidden bg-[radial-gradient(ellipse_at_center,_rgba(255,255,255,0.03),_transparent_60%)] outline-none"
                     title="여기로 드래그하여 노드를 추가"
+                    style={{ outline: 'none' }}
                 >
                     <div className="absolute left-2 top-2 z-10 text-xs font-semibold text-gray-300 bg-neutral-800/70 border border-neutral-700 px-2 py-1 rounded shadow-sm select-none">
                         ML Pipeline Canvas
@@ -728,7 +729,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             </div>
 
             {/* 3. 정보 및 실행 패널 (오른쪽 사이드바) */}
-            <div className="w-1/5 flex flex-col gap-4" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
+            <div className="w-[18%] flex flex-col gap-4" style={{ maxHeight: 'calc(100vh - 200px)', overflowY: 'auto' }}>
                 {/* 사용자 의도 입력 섹션 */}
                 <div className="p-4 bg-neutral-900/60 rounded-2xl border border-neutral-800/70 flex flex-col">
                     <div className="flex items-center justify-between mb-2">
