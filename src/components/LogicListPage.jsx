@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 
 // ---------------------------------------------------------------
@@ -16,6 +16,7 @@ const LogicListPage = ({
   const [editingId, setEditingId] = useState(null);
   const [editingValue, setEditingValue] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+  const logicListRef = useRef(null);
 
   // 검색된 로직 목록
   const filteredLogics = React.useMemo(() => {
@@ -49,6 +50,13 @@ const LogicListPage = ({
     setOpenedMenuId(null);
     setEditingId(tempId);
     setEditingValue('');
+    
+    // 로직 목록을 맨 아래로 스크롤
+    setTimeout(() => {
+      if (logicListRef.current) {
+        logicListRef.current.scrollTop = logicListRef.current.scrollHeight;
+      }
+    }, 100);
   };
 
   // 생성 확정 (Enter 또는 blur 시)
@@ -323,7 +331,7 @@ const LogicListPage = ({
       </div>
 
       {/* 로직 목록 영역 - 스크롤 가능 */}
-      <div className="overflow-y-auto pr-2" style={{ maxHeight: '50vh' }}>
+      <div ref={logicListRef} className="overflow-y-auto pr-2" style={{ maxHeight: '50vh' }}>
         <DragDropContext onDragEnd={handleDragEnd}>
           <Droppable droppableId="logic-list" renderClone={(provided, snapshot, rubric) => {
           const logic = filteredLogics[rubric.source.index];
