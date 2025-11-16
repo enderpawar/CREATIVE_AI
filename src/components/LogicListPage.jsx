@@ -90,7 +90,7 @@ const LogicListPage = ({
 
   // 메인 페이지
   return (
-    <div className="w-full max-w-6xl p-8 rounded-3xl shadow-2xl themed-card border border-neutral-800/70 animate-fadeIn flex flex-col" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
+    <div className="w-full max-w-6xl p-8 rounded-3xl shadow-2xl themed-card border border-neutral-800/70 animate-fadeIn flex flex-col overflow-y-auto" style={{ maxHeight: 'calc(100vh - 4rem)' }}>
       {/* 헤더 카드 - 그라디언트 배경과 글로우 효과 */}
       <div className="relative p-6 mb-6 rounded-2xl themed-card border border-neutral-800/70 overflow-hidden flex-shrink-0">
         {/* 배경 그라디언트 효과 */}
