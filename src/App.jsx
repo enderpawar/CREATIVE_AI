@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import LandingPage from './components/LandingPage';
 import AssetPage from './components/AssetPage';
 import LogicEditorPage from './components/LogicEditorPage';
 import {
@@ -14,7 +15,7 @@ import {
 // App: 페이지 라우팅을 담당하는 메인 컴포넌트
 // ----------------------------------------------------------------
 const App = () => {
-  const [currentPage, setCurrentPage] = useState('asset'); // 'asset' or 'editor'
+  const [currentPage, setCurrentPage] = useState('landing'); // 'landing', 'asset', 'editor'
   const [selectedLogicId, setSelectedLogicId] = useState(null);
   const [newLogicName, setNewLogicName] = useState('');
   // logics는 요약 메타만 보관: {id,name,stock?,order}
@@ -98,24 +99,29 @@ const App = () => {
   return (
     <div className="flex items-center justify-center min-h-screen font-sans bg-transparent">
 
-      {/* Theme Toggle - 모든 페이지에서 표시 */}
-      <div style={{ position: 'fixed', top: 14, right: 14, zIndex: 1000 }}>
-        <button
-          onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
-          style={{
-            padding: '8px 12px',
-            borderRadius: 10,
-            border: '1px solid var(--panel-border)',
-            background: 'var(--panel-bg)',
-            color: 'var(--text-primary)',
-            boxShadow: '0 6px 20px rgba(0,0,0,0.12)'
-          }}
-          title="테마 전환 (Dark/Light)"
-        >
-          {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
-        </button>
-      </div>
-      {currentPage === 'asset' ? (
+      {/* Theme Toggle - asset와 editor 페이지에서만 표시 */}
+      {currentPage !== 'landing' && (
+        <div style={{ position: 'fixed', top: 14, right: 14, zIndex: 1000 }}>
+          <button
+            onClick={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+            style={{
+              padding: '8px 12px',
+              borderRadius: 10,
+              border: '1px solid var(--panel-border)',
+              background: 'var(--panel-bg)',
+              color: 'var(--text-primary)',
+              boxShadow: '0 6px 20px rgba(0,0,0,0.12)'
+            }}
+            title="테마 전환 (Dark/Light)"
+          >
+            {theme === 'dark' ? '🌙 Dark' : '☀️ Light'}
+          </button>
+        </div>
+      )}
+
+      {currentPage === 'landing' ? (
+        <LandingPage onStart={() => setCurrentPage('asset')} />
+      ) : currentPage === 'asset' ? (
         <AssetPage
           logics={logics}
           onLogicClick={handleLogicClick}
