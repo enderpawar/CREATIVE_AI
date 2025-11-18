@@ -28,12 +28,15 @@ export interface CodeGenerationResult {
 
 /**
  * Gemini API를 사용하여 사용자 프롬프트로부터 Python 코드와 노드 배치 가이드를 생성합니다.
+ * Netlify Functions를 통해 안전하게 호출합니다.
  */
 export async function generatePythonCode(userPrompt: string): Promise<CodeGenerationResult> {
-    const apiKey = getApiKey();
-    if (!apiKey) throw new Error('API 키가 설정되지 않았습니다.');
-
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    // 개발 환경: localhost에서 직접 API 호출
+    // 프로덕션: Netlify Functions를 통해 호출
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_URL = isDevelopment 
+        ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${getApiKey()}`
+        : '/.netlify/functions/gemini';
     
     const systemPrompt = `당신은 머신러닝 전문가입니다. 사용자의 요구사항에 맞는 scikit-learn 기반 Python 코드를 생성하고, **초보자를 위한** 노드 기반 에디터에서 구현하기 위한 **상세한 가이드**를 제공해주세요.
 
@@ -274,16 +277,18 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
 사용자 요구사항: ${userPrompt}`;
 
     try {
+        const requestBody = {
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: {
+                temperature: 0.7,
+                maxOutputTokens: 3072,
+            }
+        };
+
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: {
-                    temperature: 0.7,
-                    maxOutputTokens: 3072,
-                }
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
@@ -320,15 +325,15 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
 
 /**
  * 노드 기반으로 생성된 기본 코드를 AI로 후처리하여 완전한 형태로 개선합니다.
- * @param generatedCode 노드로부터 생성된 기본 Python 코드
- * @param userIntent 사용자가 원하는 코드의 목적/의도
- * @returns AI가 개선한 완전한 Python 코드
+ * Netlify Functions를 통해 안전하게 호출합니다.
  */
 export async function enhanceCodeWithAI(generatedCode: string, userIntent: string): Promise<string> {
-    const apiKey = getApiKey();
-    if (!apiKey) throw new Error('API 키가 설정되지 않았습니다.');
-
-    const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    // 개발 환경: localhost에서 직접 API 호출
+    // 프로덕션: Netlify Functions를 통해 호출
+    const isDevelopment = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+    const API_URL = isDevelopment 
+        ? `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${getApiKey()}`
+        : '/.netlify/functions/gemini';
     
     const systemPrompt = `당신은 Python 머신러닝 코드 리팩토링 전문가입니다. 
 
@@ -402,16 +407,18 @@ ${userIntent}
 **출력 시작**:`;
 
     try {
+        const requestBody = {
+            contents: [{ parts: [{ text: systemPrompt }] }],
+            generationConfig: {
+                temperature: 0.3,
+                maxOutputTokens: 8192,
+            }
+        };
+
         const response = await fetch(API_URL, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{ parts: [{ text: systemPrompt }] }],
-                generationConfig: {
-                    temperature: 0.3, // 더 정확한 개선을 위해 낮춤
-                    maxOutputTokens: 8192, // 더 긴 코드 허용
-                }
-            })
+            body: JSON.stringify(requestBody)
         });
 
         if (!response.ok) {
