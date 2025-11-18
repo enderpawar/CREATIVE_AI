@@ -1,35 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { 
-    generatePythonCode, 
-    saveGeminiApiKey, 
-    getStoredGeminiApiKey,
-    removeGeminiApiKey 
-} from '../utils/geminiPipeline';
+import { generatePythonCode } from '../utils/geminiPipeline';
 import { listStoredCSVFiles, getCSVColumns } from '../utils/csvHandler';
 import { useToast } from './toast/ToastProvider.jsx';
 import geminiIcon from '../assets/gemini-color.png';
 
 /**
  * Gemini API를 사용한 Python 코드 생성 컨포넌트
+ * 개발자의 Tier1 API로 동작하므로 사용자는 API 키 설정 없이 바로 사용 가능합니다.
  */
 const GeminiPipelineGenerator = ({ onApplyPipeline, logicId }) => {
     const toast = useToast();
-    const [apiKey, setApiKey] = useState('');
-    const [hasApiKey, setHasApiKey] = useState(false);
     const [prompt, setPrompt] = useState('');
     const [generatedCode, setGeneratedCode] = useState('');
     const [nodeGuide, setNodeGuide] = useState([]);
     const [isGenerating, setIsGenerating] = useState(false);
-    const [showApiKeyInput, setShowApiKeyInput] = useState(false);
-
-    // 저장된 API 키 확인
-    useEffect(() => {
-        const stored = getStoredGeminiApiKey();
-        if (stored) {
-            setHasApiKey(true);
-            setApiKey(stored);
-        }
-    }, []);
 
     // 외부에서 프롬프트 설정 이벤트 수신
     useEffect(() => {
@@ -40,35 +24,9 @@ const GeminiPipelineGenerator = ({ onApplyPipeline, logicId }) => {
         return () => window.removeEventListener('setGeminiPrompt', handleSetPrompt);
     }, []);
 
-    const handleSaveApiKey = () => {
-        if (!apiKey.trim()) {
-            toast.error('API 키를 입력해주세요.');
-            return;
-        }
-        
-        saveGeminiApiKey(apiKey.trim());
-        setHasApiKey(true);
-        setShowApiKeyInput(false);
-        toast.success('API 키가 저장되었습니다.');
-    };
-
-    const handleRemoveApiKey = () => {
-        removeGeminiApiKey();
-        setApiKey('');
-        setHasApiKey(false);
-        setShowApiKeyInput(true);
-        toast.success('API 키가 삭제되었습니다.');
-    };
-
     const handleGenerate = async () => {
         if (!prompt.trim()) {
             toast.error('프롬프트를 입력해주세요.');
-            return;
-        }
-
-        if (!hasApiKey) {
-            toast.error('먼저 API 키를 설정해주세요.');
-            setShowApiKeyInput(true);
             return;
         }
 
@@ -149,127 +107,10 @@ const GeminiPipelineGenerator = ({ onApplyPipeline, logicId }) => {
                     <img src={geminiIcon} alt="Gemini" style={{ width: '20px', height: '20px' }} />
                     노드 로직 배치 가이드 
                 </h3>
-                {hasApiKey && !showApiKeyInput && (
-                    <button
-                        onClick={() => setShowApiKeyInput(true)}
-                        style={{
-                            padding: '6px 12px',
-                            fontSize: '12px',
-                            backgroundColor: 'transparent',
-                            color: 'var(--text-secondary)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '4px',
-                            cursor: 'pointer'
-                        }}
-                    >
-                        API 키 관리
-                    </button>
-                )}
             </div>
 
-            {/* API 키 설정 섹션 */}
-            {(!hasApiKey || showApiKeyInput) && (
-                <div style={{
-                    padding: '15px',
-                    backgroundColor: 'var(--bg-primary)',
-                    borderRadius: '6px',
-                    marginBottom: '15px'
-                }}>
-                    <label style={{
-                        display: 'block',
-                        marginBottom: '8px',
-                        fontSize: '14px',
-                        color: 'var(--text-primary)'
-                    }}>
-                        Gemini API 키
-                    </label>
-                    <input
-                        type="password"
-                        value={apiKey}
-                        onChange={(e) => setApiKey(e.target.value)}
-                        placeholder="AIzaSy..."
-                        style={{
-                            width: '100%',
-                            padding: '10px',
-                            fontSize: '14px',
-                            backgroundColor: 'var(--bg-secondary)',
-                            color: 'var(--text-primary)',
-                            border: '1px solid var(--border-color)',
-                            borderRadius: '4px',
-                            marginBottom: '10px'
-                        }}
-                    />
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                        <button
-                            onClick={handleSaveApiKey}
-                            style={{
-                                flex: 1,
-                                padding: '8px',
-                                fontSize: '14px',
-                                backgroundColor: '#10b981',
-                                color: 'white',
-                                border: 'none',
-                                borderRadius: '4px',
-                                cursor: 'pointer'
-                            }}
-                        >
-                            저장
-                        </button>
-                        {hasApiKey && (
-                            <>
-                                <button
-                                    onClick={() => setShowApiKeyInput(false)}
-                                    style={{
-                                        flex: 1,
-                                        padding: '8px',
-                                        fontSize: '14px',
-                                        backgroundColor: 'var(--bg-secondary)',
-                                        color: 'var(--text-primary)',
-                                        border: '1px solid var(--border-color)',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    취소
-                                </button>
-                                <button
-                                    onClick={handleRemoveApiKey}
-                                    style={{
-                                        padding: '8px 12px',
-                                        fontSize: '14px',
-                                        backgroundColor: '#ef4444',
-                                        color: 'white',
-                                        border: 'none',
-                                        borderRadius: '4px',
-                                        cursor: 'pointer'
-                                    }}
-                                >
-                                    삭제
-                                </button>
-                            </>
-                        )}
-                    </div>
-                    <p style={{
-                        marginTop: '10px',
-                        fontSize: '12px',
-                        color: 'var(--text-secondary)'
-                    }}>
-                        💡 <a 
-                            href="https://aistudio.google.com/app/apikey" 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            style={{ color: '#3b82f6' }}
-                        >
-                            Google AI Studio
-                        </a>에서 무료 API 키를 발급받을 수 있습니다.
-                    </p>
-                </div>
-            )}
-
             {/* 프롬프트 입력 섹션 */}
-            {hasApiKey && !showApiKeyInput && (
-                <>
-                    <div style={{ marginBottom: '15px' }}>
+            <div style={{ marginBottom: '15px' }}>
                         <label style={{
                             display: 'block',
                             marginBottom: '8px',
@@ -752,9 +593,9 @@ const GeminiPipelineGenerator = ({ onApplyPipeline, logicId }) => {
                                 <code>{generatedCode}</code>
                             </pre>
                         </div>
-                    )} */}
+                    </div>
                 </>
-            )}
+            )} */}
         </div>
     );
 };

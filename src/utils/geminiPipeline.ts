@@ -1,9 +1,11 @@
 // Gemini API를 사용하여 Python 코드 생성
 
+/**
+ * 환경변수에서 개발자의 Tier1 API 키를 가져옵니다.
+ * 사용자는 별도의 API 키 설정 없이 바로 사용 가능합니다.
+ */
 const getApiKey = (): string | null => {
-    const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (envKey) return envKey;
-    return localStorage.getItem('gemini_api_key');
+    return import.meta.env.VITE_GEMINI_API_KEY || null;
 };
 
 export interface NodeGuide {
@@ -314,26 +316,7 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
     }
 }
 
-/**
- * API 키를 localStorage에 저장합니다.
- */
-export function saveGeminiApiKey(apiKey: string): void {
-    localStorage.setItem('gemini_api_key', apiKey);
-}
-
-/**
- * 저장된 API 키를 가져옵니다.
- */
-export function getStoredGeminiApiKey(): string | null {
-    return localStorage.getItem('gemini_api_key');
-}
-
-/**
- * API 키를 삭제합니다.
- */
-export function removeGeminiApiKey(): void {
-    localStorage.removeItem('gemini_api_key');
-}
+// API 키 관리 함수는 더 이상 필요하지 않음 (환경변수 사용)
 
 /**
  * 노드 기반으로 생성된 기본 코드를 AI로 후처리하여 완전한 형태로 개선합니다.
