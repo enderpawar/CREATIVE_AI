@@ -41,6 +41,8 @@
 </details>
 
 ### 사용 예시 영상 : https://www.youtube.com/watch?v=rLLQUx_rLU4
+<img width="1838" height="986" alt="image" src="https://github.com/user-attachments/assets/ab49808e-b9c0-4f77-90a7-a2a2b3c2ae80" />
+
 ## 주요 기능
 
 ### 시각적 노드 에디터
