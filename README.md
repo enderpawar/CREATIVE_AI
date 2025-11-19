@@ -37,9 +37,9 @@
 
 5. 작성한 파이프라인을 기준으로 파이썬 코드 파싱 기능 (작성한 코드는 py, ipynb(주피터) 코드로 다운 가능)
 ![LogicEditorPage-pythoncode](https://github.com/user-attachments/assets/34af6453-1f6e-4b80-99ae-323b662795b3)
+</details>
 
-   
-
+### 사용 예시 영상 : https://www.youtube.com/watch?v=rLLQUx_rLU4
 ## 주요 기능
 
 ### 시각적 노드 에디터
