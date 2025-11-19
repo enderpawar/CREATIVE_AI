@@ -190,7 +190,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             if (!raw) return null;
             const allowed = [
                 // ML Pipeline nodes
-                'dataLoader','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'
+                'dataLoader','preprocess','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'
             ];
             // exact match 우선
             if (allowed.includes(raw)) return raw;
@@ -206,7 +206,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             if (!kind) return;
             const allowed = [
                 // ML Pipeline nodes
-                'dataLoader','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'
+                'dataLoader','preprocess','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'
             ];
             if (!allowed.includes(kind)) { console.warn('드롭된 kind 무시:', kind); return; }
 
@@ -669,6 +669,11 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                     {
                         title: '🔧 Preprocessing',
                         items: [
+                            { 
+                                label: 'Preprocess', 
+                                kind: 'preprocess',
+                                tip: '데이터 전처리 (결측치, 중복, 컬럼 정리 등)\n입력: data\n출력: data (전처리됨)'
+                            },
                             { 
                                 label: 'Data Split', 
                                 kind: 'dataSplit',

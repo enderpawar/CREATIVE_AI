@@ -31,6 +31,7 @@ export type NodeKind =
     'dataLoader'
     | 'dataSplit'
     | 'scaler'
+    | 'preprocess'
     | 'featureSelection'
     | 'classifier'
     | 'regressor'
@@ -390,6 +391,89 @@ export class PredictNode extends TradeNode {
         this.addOutput('prediction', new ClassicPreset.Output(numberSocket, '예측결과'))
         this.kind = 'predict'
         this.category = 'ml-prediction'
+    }
+}
+
+export class PreprocessNode extends TradeNode {
+    public paramsLabel: string = '' // 초기값 빈 문자열 (params 필드 숨김)
+    
+    constructor() {
+        super('Preprocess')
+        this.addInput('data', new ClassicPreset.Input(numberSocket, '데이터'))
+        this.addOutput('data', new ClassicPreset.Output(numberSocket, '데이터'))
+        
+        // 전처리 방법 드롭다운
+        const methodOptions = [
+            { value: 'fillna', label: '결측치 처리 (fillna - 평균값으로 채우기)' },
+            { value: 'drop_duplicates', label: '중복 행 제거 (drop_duplicates)' },
+            { value: 'drop_columns', label: '특정 컬럼 삭제 (drop_columns)' },
+            { value: 'rename_columns', label: '컬럼명 정리 (rename_columns - 소문자, 공백→_)' },
+            { value: 'encode_categorical', label: '범주형 데이터 인코딩 (LabelEncoder)' }
+        ]
+        
+        const methodControl = new SelectControl(methodOptions, 'fillna', (value) => {
+            // 방법에 따라 동적으로 파라미터 업데이트
+            this.updateParametersForMethod(value)
+            // 노드 리렌더링
+            if (currentArea) {
+                try {
+                    currentArea.update('node', this.id)
+                } catch (e) {
+                    console.error('Failed to update area:', e)
+                }
+            }
+        })
+        
+        this.addControl('method', methodControl)
+        this.addControl('params', new ClassicPreset.InputControl('text', { initial: '' }))
+        
+        this.kind = 'preprocess'
+        this.category = 'ml-preprocessing'
+        
+        // 초기 메서드(fillna)에 맞게 파라미터 설정
+        this.updateParametersForMethod('fillna')
+    }
+    
+    updateParametersForMethod(method: string) {
+        const paramsControl = this.controls['params'] as ClassicPreset.InputControl<'text'>
+        
+        switch(method) {
+            case 'fillna':
+                this.paramsLabel = '' // 숨김
+                if (paramsControl) paramsControl.value = ''
+                if (this._controlHints) {
+                    this._controlHints.method = { label: '전처리 방법' }
+                }
+                break
+            case 'drop_duplicates':
+                this.paramsLabel = '' // 숨김
+                if (paramsControl) paramsControl.value = ''
+                if (this._controlHints) {
+                    this._controlHints.method = { label: '전처리 방법' }
+                }
+                break
+            case 'drop_columns':
+                this.paramsLabel = 'params: 삭제할 컬럼명 (쉼표로 구분)'
+                if (this._controlHints) {
+                    this._controlHints.method = { label: '전처리 방법' }
+                    this._controlHints.params = { label: '삭제할 컬럼명', title: '예: "col1,col2,col3"' }
+                }
+                break
+            case 'rename_columns':
+                this.paramsLabel = '' // 숨김
+                if (paramsControl) paramsControl.value = ''
+                if (this._controlHints) {
+                    this._controlHints.method = { label: '전처리 방법' }
+                }
+                break
+            case 'encode_categorical':
+                this.paramsLabel = '' // 숨김
+                if (paramsControl) paramsControl.value = ''
+                if (this._controlHints) {
+                    this._controlHints.method = { label: '전처리 방법' }
+                }
+                break
+        }
     }
 }
 
@@ -1102,6 +1186,8 @@ export function createNodeByKind(kind: NodeKind): TradeNode {
         // ML Pipeline Nodes
         case 'dataLoader':
             return new DataLoaderNode()
+        case 'preprocess':
+            return new PreprocessNode()
         case 'dataSplit':
             return new DataSplitNode()
         case 'scaler':

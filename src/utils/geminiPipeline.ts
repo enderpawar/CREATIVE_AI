@@ -73,55 +73,68 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
    - 출력: **data** (정확한 이름: "data")
    - settings: { fileName: "파일명.csv" }
 
-2. **dataSplit** - "Data Split (데이터 분할)"
+2. **preprocess** - "Preprocess (전처리)"
+   - 입력: **data** (정확한 이름: "data")
+   - 출력: **data** (정확한 이름: "data")
+   - settings: { method: "fillna" | "drop_duplicates" | "drop_columns" | "rename_columns" | "encode_categorical", params: "옵션값" }
+   - 💡 데이터 전처리: 결측치 처리, 중복 제거, 컬럼 삭제, 컬럼명 정리, 범주형 인코딩
+   - method 옵션:
+     * fillna: 결측치 채우기 (수치형=평균, 범주형=최빈값) - params 불필요
+     * drop_duplicates: 중복 행 제거 - params 불필요
+     * drop_columns: 특정 컬럼 삭제 - **params 필수!** 예: "id,timestamp,불필요컬럼명"
+     * rename_columns: 컬럼명 정리 (소문자, 공백→언더스코어) - params 불필요
+     * encode_categorical: 범주형 데이터 인코딩 (LabelEncoder) - params 불필요
+   - ⚠️ **중요**: drop_columns 사용 시 반드시 settings에 params 포함: { method: "drop_columns", params: "삭제할컬럼1,삭제할컬럼2" }
+
+3. **dataSplit** - "Data Split (데이터 분할)"
    - 입력: **data** (정확한 이름: "data")
    - 출력: **train**, **test** (정확한 이름: "train", "test")
    - settings: { ratio: 0.8, targetColumn: "컬럼명" }
    - 💡 중요: 출력은 정확히 "train"과 "test"입니다
 
-3. **scaler** - "Scaler (정규화)"
+4. **scaler** - "Scaler (정규화)"
    - 입력: **data** (정확한 이름: "data")
    - 출력: **data** (정확한 이름: "data")
    - settings: { method: "StandardScaler" 또는 "MinMaxScaler" }
    - 💡 훈련용 데이터를 정규화합니다
 
-4. **featureSelection** - "Feature Selection (피처 선택)"
+5. **featureSelection** - "Feature Selection (피처 선택)"
    - 입력: **data** (정확한 이름: "data")
    - 출력: **data** (정확한 이름: "data")
    - settings: { method: "SelectKBest", k: 10 }
    - 💡 훈련용 데이터에서 중요한 특성만 선택합니다
 
-5. **classifier** - "Classifier (분류 모델)"
+6. **classifier** - "Classifier (분류 모델)"
    - 입력: **train** (정확한 이름: "train")
    - 출력: **model** (정확한 이름: "model")
    - settings: { algorithm: "RandomForest", n_estimators: 100 }
    - 💡 훈련용 데이터로 분류 모델을 학습시킵니다
 
-6. **regressor** - "Regressor (회귀 모델)"
+7. **regressor** - "Regressor (회귀 모델)"
    - 입력: **train** (정확한 이름: "train")
    - 출력: **model** (정확한 이름: "model")
    - settings: { algorithm: "LinearRegression" }
    - 💡 훈련용 데이터로 회귀 모델을 학습시킵니다
 
-7. **neuralNet** - "Neural Network (신경망)"
+8. **neuralNet** - "Neural Network (신경망)"
    - 입력: **train** (정확한 이름: "train")
    - 출력: **model** (정확한 이름: "model")
    - settings: { layers: "64,32", epochs: 50 }
    - 💡 훈련용 데이터로 신경망을 학습시킵니다
 
-8. **hyperparamTune** - "Hyperparameter Tuning (하이퍼파라미터 튜닝)"
+9. **hyperparamTune** - "Hyperparameter Tuning (하이퍼파라미터 튜닝)"
    - 입력: **train** (정확한 이름: "train")
    - 출력: **model** (정확한 이름: "model")
-   - settings: {}
+   - settings: { method: "GridSearchCV" | "RandomizedSearchCV" | "BayesSearchCV", cv: 5, n_iter: 10 }
    - 💡 최적의 설정값을 찾아 모델을 학습시킵니다
 
-9. **predict** - "Predict (예측)"
+10. **predict** - "Predict (예측)"
    - 입력: **model**, **test** (정확한 이름: "model", "test")
    - 출력: **prediction** (정확한 이름: "prediction")
    - settings: {}
    - 💡 학습된 모델로 테스트 데이터에 대한 예측을 수행합니다
 
-10. **evaluate** - "Evaluate (모델 평가)"
+11. **evaluate** - "Evaluate (모델 평가)"
    - 입력: **prediction**, **test** (정확한 이름: "prediction", "test")
    - 출력: **metrics** (정확한 이름: "metrics")
    - settings: {}

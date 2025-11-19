@@ -363,6 +363,16 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
         if (lbl === '') lbl = undefined;
       }
     }
+    if (label === 'Preprocess') {
+      if (key === 'method') lbl = '전처리 방법';
+      if (key === 'params') {
+        // 동적 레이블 가져오기
+        const node = props.data as any;
+        lbl = node.paramsLabel || 'params (파라미터)';
+        // paramsLabel이 빈 문자열이면 undefined 반환 (컨트롤 숨김)
+        if (lbl === '') lbl = undefined;
+      }
+    }
     
     // Debug logging
     if (label === 'Data Split') {
@@ -413,6 +423,11 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
         if (label === 'Hyperparameter Tuning' && key === 'n_iter') {
           const node = props.data as any;
           return node.iterLabel !== '';
+        }
+        // Preprocess의 params이고 paramsLabel이 빈 문자열이면 숨김
+        if (label === 'Preprocess' && key === 'params') {
+          const node = props.data as any;
+          return node.paramsLabel !== '';
         }
         return true;
       }).map(([key, control]) => {

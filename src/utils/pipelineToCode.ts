@@ -248,7 +248,7 @@ ${varName} = pd.read_csv('${fileName}')
 
 print(f"Data loaded: {${varName}.shape}")
 print(f"Columns: {${varName}.columns.tolist()}")
-print("\nFirst 5 rows:")
+print("First 5 rows:")
 print(${varName}.head())`
             }
         }
@@ -268,8 +268,14 @@ y = ${sourceVar}['${targetColumn}']
 X_train, X_test, y_train, y_test = train_test_split(
     X, y, test_size=${(1 - ratio).toFixed(2)}, random_state=42
 )
+
+# 모든 클래스 저장 (평가 시 사용)
+import numpy as np
+all_classes = np.unique(y)
+
 print(f"훈련 데이터: {len(X_train)}개, 테스트 데이터: {len(X_test)}개")
-print(f"목표 변수: '${targetColumn}'")`
+print(f"목표 변수: '${targetColumn}'")
+print(f"클래스: {all_classes.tolist()}")`
         }
         
         case 'scaler': {
@@ -285,6 +291,73 @@ print(f"훈련 데이터 크기: {X_train_scaled.shape}")
 # 변수 업데이트
 X_train = X_train_scaled
 X_test = X_test_scaled`
+        }
+        
+        case 'preprocess': {
+            const method = node.controls?.method?.value || node.controls?.method || 'fillna'
+            const params = node.controls?.params || ''
+            const sourceVar = getSourceVarName('data')
+            
+            let code = ''
+            switch(method) {
+                case 'fillna':
+                    code = `# 전처리 - 결측치 처리 (수치형: 평균값, 범주형: 최빈값)
+${varName} = ${sourceVar}.copy()
+# 수치형 컬럼 결측치 평균으로 채우기
+numeric_cols = ${varName}.select_dtypes(include=['number']).columns
+${varName}[numeric_cols] = ${varName}[numeric_cols].fillna(${varName}[numeric_cols].mean())
+# 범주형 컬럼 결측치 최빈값으로 채우기
+categorical_cols = ${varName}.select_dtypes(include=['object']).columns
+for col in categorical_cols:
+    ${varName}[col] = ${varName}[col].fillna(${varName}[col].mode()[0] if not ${varName}[col].mode().empty else 'Unknown')
+print(f"결측치 처리 완료: {${varName}.shape}")`
+                    break
+                case 'drop_duplicates':
+                    code = `# 전처리 - 중복 행 제거
+${varName} = ${sourceVar}.drop_duplicates().reset_index(drop=True)
+print(f"중복 제거 완료: {${sourceVar}.shape} → {${varName}.shape}")`
+                    break
+                case 'drop_columns': {
+                    const colsToDrop = params ? params.split(',').map((c: string) => c.trim()) : []
+                    if (colsToDrop.length > 0) {
+                        code = `# 전처리 - 특정 컬럼 삭제
+columns_to_drop = ${JSON.stringify(colsToDrop)}
+${varName} = ${sourceVar}.drop(columns=[col for col in columns_to_drop if col in ${sourceVar}.columns])
+print(f"컬럼 삭제 완료: {${sourceVar}.shape} → {${varName}.shape}")`
+                    } else {
+                        code = `# 전처리 - 특정 컬럼 삭제 (파라미터 미지정)
+${varName} = ${sourceVar}.copy()
+print("⚠️ 삭제할 컬럼을 파라미터에 지정하세요 (예: col1,col2)")`
+                    }
+                    break
+                }
+                case 'rename_columns':
+                    code = `# 전처리 - 컬럼명 정리 (소문자, 공백→언더스코어)
+${varName} = ${sourceVar}.copy()
+${varName}.columns = ${varName}.columns.str.strip()
+${varName}.columns = ${varName}.columns.str.lower().str.replace(' ', '_').str.replace('[^a-z0-9_]', '', regex=True)
+print(f"컬럼명 정리 완료")
+print(f"정리된 컬럼: {${varName}.columns.tolist()}")`
+                    break
+                case 'encode_categorical':
+                    code = `# 전처리 - 범주형 데이터 인코딩 (Label Encoding)
+from sklearn.preprocessing import LabelEncoder
+${varName} = ${sourceVar}.copy()
+categorical_cols = ${varName}.select_dtypes(include=['object']).columns
+encoders = {}
+for col in categorical_cols:
+    le = LabelEncoder()
+    ${varName}[col] = le.fit_transform(${varName}[col].astype(str))
+    encoders[col] = le
+print(f"범주형 인코딩 완료: {len(categorical_cols)}개 컬럼")
+print(f"인코딩된 컬럼: {list(categorical_cols)}")`
+                    break
+                default:
+                    code = `# 전처리 (${method})
+${varName} = ${sourceVar}.copy()`
+            }
+            
+            return code
         }
         
         case 'featureSelection': {
@@ -458,9 +531,9 @@ print(f"훈련 정확도: {${varName}.score(X_train, y_train):.4f}")`
             
             // v4.0에서는 항상 prediction을 통해 평가 (predict 노드 필수)
             if (isRegression) {
-                evaluationCode = `# 모델 평가 (회귀)\nfrom sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error\nmse = mean_squared_error(y_test, y_pred)\nrmse = np.sqrt(mse)\nmae = mean_absolute_error(y_test, y_pred)\nr2 = r2_score(y_test, y_pred)\nprint(f"Mean Squared Error (MSE): {mse:.4f}")\nprint(f"Root Mean Squared Error (RMSE): {rmse:.4f}")\nprint(f"Mean Absolute Error (MAE): {mae:.4f}")\nprint(f"R² Score: {r2:.4f}")`
+                evaluationCode = `# 모델 평가 (회귀)\nfrom sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error\nimport numpy as np\nmse = mean_squared_error(y_test, y_pred)\nrmse = np.sqrt(mse)\nmae = mean_absolute_error(y_test, y_pred)\nr2 = r2_score(y_test, y_pred)\nprint(f"Mean Squared Error (MSE): {mse:.4f}")\nprint(f"Root Mean Squared Error (RMSE): {rmse:.4f}")\nprint(f"Mean Absolute Error (MAE): {mae:.4f}")\nprint(f"R² Score: {r2:.4f}")`
             } else {
-                evaluationCode = `# 모델 평가 (분류)\naccuracy = accuracy_score(y_test, y_pred)\nprint(f"Accuracy: {accuracy:.4f}")\nprint("\\nClassification Report:")\nprint(classification_report(y_test, y_pred, zero_division=0))\nprint("\\nConfusion Matrix:")\nprint(confusion_matrix(y_test, y_pred))`
+                evaluationCode = `# 모델 평가 (분류)\naccuracy = accuracy_score(y_test, y_pred)\nprint(f"Accuracy: {accuracy:.4f}")\nprint("\\nClassification Report:")\n# Data Split에서 저장된 모든 클래스 사용 (경고 방지)\nprint(classification_report(y_test, y_pred, labels=all_classes, zero_division=0))\nprint("\\nConfusion Matrix:")\nprint(confusion_matrix(y_test, y_pred, labels=all_classes))`
             }
             
             return evaluationCode
@@ -673,7 +746,7 @@ export function generatePythonCode(graph: GraphData, logicId?: string): string {
     
     // ML 노드만 필터링
     const mlNodes = graph.nodes.filter(n => 
-        ['dataLoader', 'dataSplit', 'scaler', 'featureSelection', 
+        ['dataLoader', 'preprocess', 'dataSplit', 'scaler', 'featureSelection', 
          'classifier', 'regressor', 'neuralNet', 'evaluate', 
          'predict', 'hyperparamTune'].includes(n.kind)
     )
