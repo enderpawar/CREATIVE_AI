@@ -13,6 +13,7 @@
   
 2. 로직 리스트 순서 바꾸기 기능 지원
 ![LogicListPage-index change](https://github.com/user-attachments/assets/98b56d2a-2ccc-447b-bd40-30e47e5f1ca6)
+</details>
 
 ## LogicEditorPage
 <img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/a54b0bb8-f359-4de5-a02a-0f2f4ae8dbd9" />
@@ -29,6 +30,7 @@
 
 4. 노드 배치 가이드대로 캔버스에 노드 자동 배치하기 기능
 ![LogicEditorPage-canvas auto set](https://github.com/user-attachments/assets/93bcda2e-ae76-4a72-ba1f-16fbddd30398)
+</details>
 
 
 ## 주요 기능
