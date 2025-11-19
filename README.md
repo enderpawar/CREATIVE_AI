@@ -4,7 +4,7 @@
 
 ![Animation](https://github.com/user-attachments/assets/68fcc332-ec0b-4e4e-8048-f018ed11d5d2)
 
-## LogicListPage
+## LogicListPage - 로직 리스트 목록을 보여주는 페이지
 <img width="2560" height="1345" alt="image" src="https://github.com/user-attachments/assets/eae47ea8-4928-4904-a572-b05de7caca26" />
 <details> 
   <summary>LogicListPage 세부 기능 소개</summary>
@@ -16,7 +16,7 @@
 ![LogicListPage-index change](https://github.com/user-attachments/assets/98b56d2a-2ccc-447b-bd40-30e47e5f1ca6)
 </details>
 
-## LogicEditorPage
+## LogicEditorPage - 파이프라인 로직을 편집할 수 있는 페이지
 <img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/a54b0bb8-f359-4de5-a02a-0f2f4ae8dbd9" />
 <details>
   <summary>LogicEditorPage 세부 기능 소개</summary>
