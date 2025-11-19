@@ -29,7 +29,6 @@
 2. shift+좌클릭으로 캔버스 영역 내 노드 중복 선택 & 삭제/복사/잘라내기/붙여넣기 기능
 ![LogicEditorPage-drag modal](https://github.com/user-attachments/assets/2324d725-92af-4e72-ba18-9246996b6ac8)
 
-
 3. Gemini API로 노드 배치 가이드 
 ![LogicEditorPage-nodeguide](https://github.com/user-attachments/assets/7b8f8b36-2e0f-4e77-9aa7-adddd9d7f116)
 
@@ -42,6 +41,7 @@
 
 ### 사용 예시 영상 : https://www.youtube.com/watch?v=rLLQUx_rLU4
 <img width="1838" height="986" alt="image" src="https://github.com/user-attachments/assets/ab49808e-b9c0-4f77-90a7-a2a2b3c2ae80" />
+-대학생의 주간 학습 시간, 수면 시간, 이전 학기 학점"**을 기반으로 **"현재 학기의 예상 학점(평점)"**을 예측하는 선형 회귀(Regression) 문제 시나리오를 기준으로 파이썬코드를 출력하는 양식을 보여드립니다.
 
 ## 주요 기능
 
