@@ -20,7 +20,6 @@
 <img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/a54b0bb8-f359-4de5-a02a-0f2f4ae8dbd9" />
 <details>
   <summary>LogicEditorPage 세부 기능 소개</summary>
-### 세부 기능 소개
   
 1. 좌측 사이드바에서 노드를 끌어와 캔버스에 배치하기 기능 
 ![LogicEditorPage-node create](https://github.com/user-attachments/assets/7e7f9e9f-2fe8-4598-babc-2247f849d72b)
