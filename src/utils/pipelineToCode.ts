@@ -237,26 +237,18 @@ import base64
 csv_content = base64.b64decode('${base64Content}').decode('utf-8')
 ${varName} = pd.read_csv(io.StringIO(csv_content))
 
-# 컬럼명 정리 (공백 및 특수문자 제거)
-${varName}.columns = ${varName}.columns.str.strip()
-${varName}.columns = [col.split('(')[0].strip().replace('#', '').replace(' ', '_').lower() for col in ${varName}.columns]
-
 print(f"Data loaded from ${fileName}: {${varName}.shape}")
 print(f"Columns: {${varName}.columns.tolist()}")
-print("\\nFirst 5 rows:")
+print("First 5 rows:")
 print(${varName}.head())`
             } else {
                 // 파일 경로만 있는 경우 (기존 방식)
                 return `# Load Data from file
 ${varName} = pd.read_csv('${fileName}')
 
-# 컬럼명 정리 (공백 및 특수문자 제거)
-${varName}.columns = ${varName}.columns.str.strip()
-${varName}.columns = [col.split('(')[0].strip().replace('#', '').replace(' ', '_').lower() for col in ${varName}.columns]
-
 print(f"Data loaded: {${varName}.shape}")
 print(f"Columns: {${varName}.columns.tolist()}")
-print("\\nFirst 5 rows:")
+print("\nFirst 5 rows:")
 print(${varName}.head())`
             }
         }
@@ -268,6 +260,9 @@ print(${varName}.head())`
             
             return `# 훈련/테스트 데이터 분할
 # 목표 변수: '${targetColumn}'
+if '${targetColumn}' not in ${sourceVar}.columns:
+    raise ValueError(f"❌ 타겟 컬럼 '{targetColumn}'이(가) 데이터에 없습니다.\\n사용 가능한 컬럼: {${sourceVar}.columns.tolist()}")
+
 X = ${sourceVar}.drop('${targetColumn}', axis=1)
 y = ${sourceVar}['${targetColumn}']
 X_train, X_test, y_train, y_test = train_test_split(
@@ -293,14 +288,70 @@ X_test = X_test_scaled`
         }
         
         case 'featureSelection': {
-            const method = node.controls?.method || 'SelectKBest'
+            const method = node.controls?.method?.value || node.controls?.method || 'SelectKBest'
             const k = node.controls?.k || 10
             
-            return `# 특성 선택 (${method})
+            let code = ''
+            switch(method) {
+                case 'SelectKBest':
+                    code = `# 특성 선택 - SelectKBest (점수 기반 상위 k개)
+# 각 특징을 통계적 점수로 평가하여 상위 k개 선택
+${varName} = SelectKBest(score_func=f_classif, k=${k})
+X_train_selected = ${varName}.fit_transform(X_train, y_train)
+X_test_selected = ${varName}.transform(X_test)
+print(f"SelectKBest: {X_train.shape[1]}개 특징 중 {${k}}개 선택")
+print(f"선택된 특징 인덱스: {${varName}.get_support(indices=True)}")`
+                    break
+                case 'RFE':
+                    code = `# 특성 선택 - RFE (재귀적 특징 제거)
+# 재귀적으로 특징을 제거하며 가장 중요한 n개 선택
+estimator = RandomForestClassifier(n_estimators=10, random_state=42)
+${varName} = RFE(estimator, n_features_to_select=${k}, step=1)
+X_train_selected = ${varName}.fit_transform(X_train, y_train)
+X_test_selected = ${varName}.transform(X_test)
+print(f"RFE: {X_train.shape[1]}개 특징 중 {${k}}개 선택")
+print(f"선택된 특징 인덱스: {${varName}.get_support(indices=True)}")
+print(f"특징 순위: {${varName}.ranking_}")`
+                    break
+                case 'SelectFromModel':
+                    code = `# 특성 선택 - SelectFromModel (모델 기반 중요도)
+# 학습된 모델에서 중요도가 평균 이상인 특징만 선택
+estimator = RandomForestClassifier(n_estimators=100, random_state=42)
+${varName} = SelectFromModel(estimator, threshold='mean')
+X_train_selected = ${varName}.fit_transform(X_train, y_train)
+X_test_selected = ${varName}.transform(X_test)
+print(f"SelectFromModel: {X_train.shape[1]}개 특징 중 {${varName}.get_support().sum()}개 선택")
+print(f"선택된 특징 인덱스: {${varName}.get_support(indices=True)}")
+print(f"임계값: {${varName}.threshold_}")`
+                    break
+                case 'VarianceThreshold':
+                    code = `# 특성 선택 - VarianceThreshold (분산 임계값)
+# 분산이 임계값 이하인 특징 제거 (값이 거의 변하지 않는 특징 제거)
+${varName} = VarianceThreshold(threshold=0.0)
+X_train_selected = ${varName}.fit_transform(X_train)
+X_test_selected = ${varName}.transform(X_test)
+print(f"VarianceThreshold: {X_train.shape[1]}개 특징 중 {X_train_selected.shape[1]}개 선택")
+print(f"제거된 분산이 0인 특징들")
+print(f"각 특징의 분산: {${varName}.variances_}")`
+                    break
+                case 'SelectPercentile':
+                    code = `# 특성 선택 - SelectPercentile (상위 백분위)
+# 점수 기반으로 상위 백분위 특징 선택
+${varName} = SelectPercentile(score_func=f_classif, percentile=${k})
+X_train_selected = ${varName}.fit_transform(X_train, y_train)
+X_test_selected = ${varName}.transform(X_test)
+print(f"SelectPercentile({k}%): {X_train.shape[1]}개 특징 중 {X_train_selected.shape[1]}개 선택")
+print(f"선택된 특징 인덱스: {${varName}.get_support(indices=True)}")`
+                    break
+                default:
+                    code = `# 특성 선택 (${method})
 ${varName} = ${method}(k=${k})
 X_train_selected = ${varName}.fit_transform(X_train, y_train)
 X_test_selected = ${varName}.transform(X_test)
-print(f"{X_train.shape[1]}개 특성 중 {k}개 선택")
+print(f"{X_train.shape[1]}개 특징 중 {k}개 선택")`
+            }
+            
+            return code + `
 
 # 변수 업데이트
 X_train = X_train_selected
@@ -409,7 +460,7 @@ print(f"훈련 정확도: {${varName}.score(X_train, y_train):.4f}")`
             if (isRegression) {
                 evaluationCode = `# 모델 평가 (회귀)\nfrom sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error\nmse = mean_squared_error(y_test, y_pred)\nrmse = np.sqrt(mse)\nmae = mean_absolute_error(y_test, y_pred)\nr2 = r2_score(y_test, y_pred)\nprint(f"Mean Squared Error (MSE): {mse:.4f}")\nprint(f"Root Mean Squared Error (RMSE): {rmse:.4f}")\nprint(f"Mean Absolute Error (MAE): {mae:.4f}")\nprint(f"R² Score: {r2:.4f}")`
             } else {
-                evaluationCode = `# 모델 평가 (분류)\naccuracy = accuracy_score(y_test, y_pred)\nprint(f"Accuracy: {accuracy:.4f}")\nprint("\\nClassification Report:")\nprint(classification_report(y_test, y_pred))\nprint("\\nConfusion Matrix:")\nprint(confusion_matrix(y_test, y_pred))`
+                evaluationCode = `# 모델 평가 (분류)\naccuracy = accuracy_score(y_test, y_pred)\nprint(f"Accuracy: {accuracy:.4f}")\nprint("\\nClassification Report:")\nprint(classification_report(y_test, y_pred, zero_division=0))\nprint("\\nConfusion Matrix:")\nprint(confusion_matrix(y_test, y_pred))`
             }
             
             return evaluationCode
@@ -441,16 +492,94 @@ print(f"처음 10개 예측: {y_pred[:10]}")`
         }
         
         case 'hyperparamTune': {
-            return `# 하이퍼파라미터 틜닝
-param_grid = {
+            const method = node.controls?.method?.value || node.controls?.method || 'GridSearchCV'
+            const cv = node.controls?.cv || 5
+            const n_iter = node.controls?.n_iter || 10
+            
+            let code = ''
+            const paramGrid = `{
     'n_estimators': [50, 100, 200],
-    'max_depth': [10, 20, 30]
-}
+    'max_depth': [10, 20, 30],
+    'min_samples_split': [2, 5, 10]
+}`
+            
+            switch(method) {
+                case 'GridSearchCV':
+                    code = `# 하이퍼파라미터 튜닝 - GridSearchCV (격자 탐색)
+# 모든 파라미터 조합을 체계적으로 탐색
+param_grid = ${paramGrid}
+${varName} = GridSearchCV(
+    RandomForestClassifier(random_state=42), 
+    param_grid, 
+    cv=${cv},
+    n_jobs=-1,  # 모든 CPU 코어 사용
+    verbose=1
+)
+${varName}.fit(X_train, y_train)
+best_model = ${varName}.best_estimator_
+print(f"최적 파라미터: {${varName}.best_params_}")
+print(f"최고 교차검증 점수: {${varName}.best_score_:.4f}")`
+                    break
+                    
+                case 'RandomizedSearchCV':
+                    code = `# 하이퍼파라미터 튜닝 - RandomizedSearchCV (랜덤 탐색)
+param_distributions = ${paramGrid}
+${varName} = RandomizedSearchCV(
+    RandomForestClassifier(random_state=42),
+    param_distributions,
+    n_iter=${n_iter},
+    cv=${cv},
+    random_state=42,
+    verbose=1
+)
+${varName}.fit(X_train, y_train)
+best_model = ${varName}.best_estimator_
+print(f"최적 파라미터: {${varName}.best_params_}")
+print(f"최고 교차검증 점수: {${varName}.best_score_:.4f}")`
+                    break
+                    
+                case 'BayesSearchCV':
+                    code = `# 하이퍼파라미터 튜닝 - BayesSearchCV (베이지안 최적화)
+# 주의: scikit-optimize 설치 필요 (pip install scikit-optimize)
+try:
+    search_spaces = {
+        'n_estimators': (50, 200),
+        'max_depth': (10, 30),
+        'min_samples_split': (2, 10)
+    }
+    ${varName} = BayesSearchCV(
+        RandomForestClassifier(random_state=42),
+        search_spaces,
+        n_iter=${n_iter},
+        cv=${cv},
+        random_state=42,
+        verbose=1
+    )
+    ${varName}.fit(X_train, y_train)
+    best_model = ${varName}.best_estimator_
+    print(f"최적 파라미터: {${varName}.best_params_}")
+    print(f"최고 교차검증 점수: {${varName}.best_score_:.4f}")
+except ImportError:
+    print("BayesSearchCV를 사용하려면 scikit-optimize를 설치해야 합니다.")
+    print("설치: pip install scikit-optimize")
+    # Fallback to GridSearchCV
+    param_grid = ${paramGrid}
+    ${varName} = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=${cv})
+    ${varName}.fit(X_train, y_train)
+    best_model = ${varName}.best_estimator_`
+                    break
+                    
+                default:
+                    code = `# 하이퍼파라미터 튜닝
+param_grid = ${paramGrid}
 grid_search = GridSearchCV(RandomForestClassifier(random_state=42), param_grid, cv=5)
 grid_search.fit(X_train, y_train)
 ${varName} = grid_search.best_estimator_
 print(f"최적 파라미터: {grid_search.best_params_}")
 print(f"최고 점수: {grid_search.best_score_:.4f}")`
+            }
+            
+            return code
         }
         
         default:
@@ -475,9 +604,26 @@ function generateImports(nodes: NodeData[]): string {
             case 'scaler':
                 imports.add('from sklearn.preprocessing import StandardScaler, MinMaxScaler, RobustScaler, MaxAbsScaler')
                 break
-            case 'featureSelection':
-                imports.add('from sklearn.feature_selection import SelectKBest, f_classif')
+            case 'featureSelection': {
+                const fsMethod = node.controls?.method?.value || node.controls?.method || 'SelectKBest'
+                if (fsMethod === 'SelectKBest') {
+                    imports.add('from sklearn.feature_selection import SelectKBest, f_classif')
+                } else if (fsMethod === 'RFE') {
+                    imports.add('from sklearn.feature_selection import RFE')
+                    imports.add('from sklearn.ensemble import RandomForestClassifier')
+                } else if (fsMethod === 'SelectFromModel') {
+                    imports.add('from sklearn.feature_selection import SelectFromModel')
+                    imports.add('from sklearn.ensemble import RandomForestClassifier')
+                } else if (fsMethod === 'VarianceThreshold') {
+                    imports.add('from sklearn.feature_selection import VarianceThreshold')
+                } else if (fsMethod === 'SelectPercentile') {
+                    imports.add('from sklearn.feature_selection import SelectPercentile, f_classif')
+                } else {
+                    imports.add('from sklearn.feature_selection import SelectKBest, RFE, SelectFromModel, VarianceThreshold, SelectPercentile')
+                    imports.add('from sklearn.ensemble import RandomForestClassifier')
+                }
                 break
+            }
             case 'classifier':
                 imports.add('from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier')
                 imports.add('from sklearn.linear_model import LogisticRegression')
@@ -496,9 +642,21 @@ function generateImports(nodes: NodeData[]): string {
             case 'evaluate':
                 imports.add('from sklearn.metrics import accuracy_score, classification_report, confusion_matrix')
                 break
-            case 'hyperparamTune':
-                imports.add('from sklearn.model_selection import GridSearchCV')
+            case 'hyperparamTune': {
+                const htMethod = node.controls?.method?.value || node.controls?.method || 'GridSearchCV'
+                imports.add('from sklearn.ensemble import RandomForestClassifier')
+                if (htMethod === 'GridSearchCV') {
+                    imports.add('from sklearn.model_selection import GridSearchCV')
+                } else if (htMethod === 'RandomizedSearchCV') {
+                    imports.add('from sklearn.model_selection import RandomizedSearchCV')
+                } else if (htMethod === 'BayesSearchCV') {
+                    imports.add('# from skopt import BayesSearchCV  # pip install scikit-optimize')
+                    imports.add('from sklearn.model_selection import GridSearchCV')
+                } else {
+                    imports.add('from sklearn.model_selection import GridSearchCV, RandomizedSearchCV')
+                }
                 break
+            }
         }
     })
     

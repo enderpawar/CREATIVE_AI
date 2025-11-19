@@ -39,6 +39,7 @@ export function SelectControlComponent(props: { data: SelectControl }) {
         const newValue = e.target.value;
         setValue(newValue);
         data.setValue(newValue);
+        // onChange 콜백에서 area.update()가 호출됨
     };
 
     return (

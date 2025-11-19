@@ -340,6 +340,29 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
       if (key === 'algorithm') lbl = '알고리즘';
       if (key === 'n_estimators') lbl = '트리 개수';
     }
+    if (label === 'Feature Selection') {
+      if (key === 'method') lbl = '선택 방법';
+      if (key === 'k') {
+        // 동적 레이블 가져오기
+        const node = props.data as any;
+        lbl = node.parameterLabel || 'k (선택할 특징 수)';
+      }
+    }
+    if (label === 'Hyperparameter Tuning') {
+      if (key === 'method') lbl = '튜닝 방법';
+      if (key === 'cv') {
+        // 동적 레이블 가져오기
+        const node = props.data as any;
+        lbl = node.cvLabel || 'cv (교차 검증 폴드 수)';
+      }
+      if (key === 'n_iter') {
+        // 동적 레이블 가져오기
+        const node = props.data as any;
+        lbl = node.iterLabel || 'n_iter (반복 횟수)';
+        // iterLabel이 빈 문자열이면 undefined 반환 (컨트롤 숨김)
+        if (lbl === '') lbl = undefined;
+      }
+    }
     
     // Debug logging
     if (label === 'Data Split') {
@@ -385,7 +408,14 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
           )
       )}
       {/* Controls */}
-      {controls.map(([key, control]) => {
+      {controls.filter(([key]) => {
+        // Hyperparameter Tuning의 n_iter이고 iterLabel이 빈 문자열이면 숨김
+        if (label === 'Hyperparameter Tuning' && key === 'n_iter') {
+          const node = props.data as any;
+          return node.iterLabel !== '';
+        }
+        return true;
+      }).map(([key, control]) => {
         if (!control) return null;
         const lbl = resolveLabel(key);
         
@@ -434,7 +464,9 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
             try {
               if (typeof ctrl.setValue === 'function') ctrl.setValue(v);
               else ctrl.value = v;
-            } catch {}
+            } catch (e) {
+              console.error('Error setting value:', e);
+            }
           };
           return (
             <div key={key} className="control-row">
@@ -452,6 +484,7 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
         const isInputControl = ctrl.type === 'text' || ctrl.type === 'number';
         
         if (isInputControl) {
+          const options = ctrl.options || {};
           return (
             <div key={key} className="control-row">
               {lbl && <div className="control-label">{lbl}</div>}
@@ -459,8 +492,9 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
                 <CustomInput 
                   control={control}
                   type={ctrl.type}
-                  step={ctrl.type === 'number' ? '0.1' : undefined}
-                  min={ctrl.type === 'number' ? '0' : undefined}
+                  step={options.step?.toString() || (ctrl.type === 'number' ? '1' : undefined)}
+                  min={options.min?.toString()}
+                  max={options.max?.toString()}
                 />
               </div>
             </div>

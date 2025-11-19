@@ -17,6 +17,9 @@ import '../customization/background.css'
 // 현재 로직 ID를 저장하는 전역 변수
 let currentLogicId: string | undefined = undefined
 
+// 현재 area plugin 인스턴스를 저장하는 전역 변수
+let currentArea: any = undefined
+
 // logicId를 설정하는 함수 (외부에서 호출)
 export function setCurrentLogicId(logicId: string | undefined) {
     currentLogicId = logicId
@@ -140,7 +143,12 @@ export class DataSplitNode extends TradeNode {
         // 초기 타겟 컬럼 컨트롤 (드롭다운으로 시작)
         this.updateTargetColumnControl()
         
-        this.addControl('ratio', new ClassicPreset.InputControl('number', { initial: 0.8 }))
+        this.addControl('ratio', new ClassicPreset.InputControl('number', { 
+            initial: 0.8,
+            step: 0.01,
+            min: 0.1,
+            max: 0.9
+        } as any))
         this.kind = 'dataSplit'
         this.category = 'ml-preprocessing'
         this._controlHints = {
@@ -218,14 +226,76 @@ export class ScalerNode extends TradeNode {
 }
 
 export class FeatureSelectionNode extends TradeNode {
+    public parameterLabel: string = 'k: 선택할 특징 개수 (정수)'
+    
     constructor() {
         super('Feature Selection')
         this.addInput('data', new ClassicPreset.Input(numberSocket, '데이터'))
         this.addOutput('data', new ClassicPreset.Output(numberSocket, '데이터'))
-        this.addControl('method', new ClassicPreset.InputControl('text', { initial: 'SelectKBest' }))
-        this.addControl('k', new ClassicPreset.InputControl('number', { initial: 10 }))
+        
+        // Feature Selection 방법 드롭다운
+        const methodOptions = [
+            { value: 'SelectKBest', label: 'SelectKBest (점수 기반 상위 k개)' },
+            { value: 'RFE', label: 'RFE (재귀적 특징 제거)' },
+            { value: 'SelectFromModel', label: 'SelectFromModel (중요도 임계값)' },
+            { value: 'VarianceThreshold', label: 'VarianceThreshold (분산 임계값)' },
+            { value: 'SelectPercentile', label: 'SelectPercentile (상위 백분위)' }
+        ]
+        
+        const methodControl = new SelectControl(methodOptions, 'SelectKBest', (value) => {
+            // 방법에 따라 동적으로 파라미터 업데이트
+            this.updateParametersForMethod(value)
+            // 노드 리렌더링
+            if (currentArea) {
+                try {
+                    currentArea.update('node', this.id)
+                } catch (e) {
+                    console.error('Failed to update area:', e)
+                }
+            }
+        })
+        
+        this.addControl('method', methodControl)
+        this.addControl('k', new ClassicPreset.InputControl('number', { 
+            initial: 10,
+            step: 1,
+            min: 1
+        } as any))
+        
         this.kind = 'featureSelection'
         this.category = 'ml-preprocessing'
+    }
+    
+    updateParametersForMethod(method: string) {
+        const kControl = this.controls['k'] as ClassicPreset.InputControl<'number'>
+        
+        switch(method) {
+            case 'SelectKBest':
+                // 점수 함수로 각 특징 평가 후 상위 k개 선택
+                this.parameterLabel = 'k: 선택할 특징 개수 (정수)'
+                if (kControl) kControl.value = 10
+                break
+            case 'SelectPercentile':
+                // 점수 상위 백분위 특징 선택
+                this.parameterLabel = 'percentile: 선택할 백분위 (1~100%)'
+                if (kControl) kControl.value = 50
+                break
+            case 'SelectFromModel':
+                // 학습된 모델의 중요도가 임계값 이상인 특징만 선택
+                this.parameterLabel = 'threshold: 중요도 임계값 (0.0~1.0 또는 median, mean)'
+                if (kControl) kControl.value = 0.5
+                break
+            case 'RFE':
+                // 재귀적으로 특징을 제거하며 최적의 n개 선택
+                this.parameterLabel = 'n_features_to_select: 최종 특징 개수 (정수)'
+                if (kControl) kControl.value = 10
+                break
+            case 'VarianceThreshold':
+                // 분산이 임계값 이하인 특징 제거 (값이 거의 변하지 않는 특징 제거)
+                this.parameterLabel = 'threshold: 최소 분산값 (0.0 이상, 예: 0.0)'
+                if (kControl) kControl.value = 0.0
+                break
+        }
     }
 }
 
@@ -246,7 +316,11 @@ export class ClassifierNode extends TradeNode {
         ]
         
         this.addControl('algorithm', new SelectControl(algorithmOptions, 'RandomForest'))
-        this.addControl('n_estimators', new ClassicPreset.InputControl('number', { initial: 100 }))
+        this.addControl('n_estimators', new ClassicPreset.InputControl('number', { 
+            initial: 100,
+            step: 10,
+            min: 10
+        } as any))
         this.kind = 'classifier'
         this.category = 'ml-model'
         this._controlHints = {
@@ -287,7 +361,11 @@ export class NeuralNetNode extends TradeNode {
         this.addInput('train', new ClassicPreset.Input(numberSocket, '훈련용'))
         this.addOutput('model', new ClassicPreset.Output(numberSocket, '모델'))
         this.addControl('layers', new ClassicPreset.InputControl('text', { initial: '64,32' }))
-        this.addControl('epochs', new ClassicPreset.InputControl('number', { initial: 50 }))
+        this.addControl('epochs', new ClassicPreset.InputControl('number', { 
+            initial: 50,
+            step: 10,
+            min: 10
+        } as any))
         this.kind = 'neuralNet'
         this.category = 'ml-model'
     }
@@ -316,13 +394,77 @@ export class PredictNode extends TradeNode {
 }
 
 export class HyperparamTuneNode extends TradeNode {
+    public cvLabel: string = 'cv (교차 검증 폴드 수)'
+    public iterLabel: string = '' // 초기값 빈 문자열 (GridSearchCV 기본값)
+    
     constructor() {
         super('Hyperparameter Tuning')
         this.addInput('train', new ClassicPreset.Input(numberSocket, '훈련용'))
         this.addOutput('model', new ClassicPreset.Output(numberSocket, '모델'))
-        this.addControl('method', new ClassicPreset.InputControl('text', { initial: 'GridSearch' }))
+        
+        // Hyperparameter Tuning 방법 드롭다운
+        const methodOptions = [
+            { value: 'GridSearchCV', label: 'GridSearchCV (격자 탐색)' },
+            { value: 'RandomizedSearchCV', label: 'RandomizedSearchCV (랜덤 탐색)' },
+            { value: 'BayesSearchCV', label: 'BayesSearchCV (베이지안 최적화)' }
+        ]
+        
+        const methodControl = new SelectControl(methodOptions, 'GridSearchCV', (value) => {
+            // 방법에 따라 동적으로 파라미터 업데이트
+            this.updateParametersForMethod(value)
+            // 노드 리렌더링
+            if (currentArea) {
+                try {
+                    currentArea.update('node', this.id)
+                } catch (e) {
+                    console.error('Failed to update area:', e)
+                }
+            }
+        })
+        
+        this.addControl('method', methodControl)
+        this.addControl('cv', new ClassicPreset.InputControl('number', { 
+            initial: 5,
+            step: 1,
+            min: 2,
+            max: 20
+        } as any))
+        this.addControl('n_iter', new ClassicPreset.InputControl('number', { 
+            initial: 10,
+            step: 5,
+            min: 5
+        } as any))
+        
         this.kind = 'hyperparamTune'
         this.category = 'ml-optimization'
+        
+        // 초기 메서드(GridSearchCV)에 맞게 파라미터 설정
+        this.updateParametersForMethod('GridSearchCV')
+    }
+    
+    updateParametersForMethod(method: string) {
+        const cvControl = this.controls['cv'] as ClassicPreset.InputControl<'number'>
+        const iterControl = this.controls['n_iter'] as ClassicPreset.InputControl<'number'>
+        
+        switch(method) {
+            case 'GridSearchCV':
+                this.cvLabel = 'cv (교차 검증 폴드 수)'
+                this.iterLabel = '' // GridSearchCV는 n_iter 미사용
+                if (cvControl) cvControl.value = 5
+                break
+            case 'RandomizedSearchCV':
+                this.cvLabel = 'cv (교차 검증 폴드 수)'
+                this.iterLabel = 'n_iter (시도할 조합 수)'
+                if (cvControl) cvControl.value = 5
+                if (iterControl) iterControl.value = 10
+                break
+            case 'BayesSearchCV':
+                this.cvLabel = 'cv (교차 검증 폴드 수)'
+                this.iterLabel = 'n_iter (최적화 반복 횟수)'
+                if (cvControl) cvControl.value = 5
+                if (iterControl) iterControl.value = 50
+                break
+        }
     }
 }
 
@@ -337,6 +479,9 @@ export async function createAppEditor(container: HTMLElement): Promise<{
     const area: any = new AreaPlugin(container as unknown as HTMLElement)
     const connection: any = new ConnectionPlugin()
     const reactRender: any = new ReactPlugin({ createRoot })
+
+    // 전역 변수에 area 저장
+    currentArea = area
 
     editor.use(area)
     area.use(connection)
