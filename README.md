@@ -35,6 +35,10 @@
 ![LogicEditorPage-canvas auto set](https://github.com/user-attachments/assets/93bcda2e-ae76-4a72-ba1f-16fbddd30398)
 </details>
 
+5. 작성한 파이프라인을 기준으로 파이썬 코드 파싱 기능 (작성한 코드는 py, ipynb(주피터) 코드로 다운 가능)
+![LogicEditorPage-pythoncode](https://github.com/user-attachments/assets/34af6453-1f6e-4b80-99ae-323b662795b3)
+
+   
 
 ## 주요 기능
 
@@ -143,7 +147,7 @@ MIT License
 
 > ### 이전 프로젝트 히스토리
 
-본 프로젝트는 Trade Builder(노드 기반 주식매매 프로그램0 프로젝트에서 시작되어 CREATIVE AI로 전환되었습니다.
+본 프로젝트는 Trade Builder(노드 기반 주식매매 프로그램) 프로젝트에서 시작되어 CREATIVE AI로 전환되었습니다.
 CREATIVE AI의 제작자(enderpawar)는 해당 프로젝트에서 UI 제작을 담당하였으며 다른 사람이 작성한 코드 없이 오직 본인이 작성한 UI를 개선시켜
 CREATIVE AI에서 노드 편집기 및 메인 페이지로 활용하였음을 공지합니다.
 
