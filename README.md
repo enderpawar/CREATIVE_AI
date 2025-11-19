@@ -159,9 +159,10 @@ CREATIVE AI에서 노드 편집기 및 메인 페이지로 활용하였음을 �
 
 
 > ### 메인 화면: 
-![메인화면](public/실행화면1.png)
+<img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/71f293be-4334-40ee-a3a5-17ad7654dac9" />
+
 
 > ### 에디터 화면:
-![](public/실행화면2.png)
+<img width="3840" height="2160" alt="image" src="https://github.com/user-attachments/assets/c26b5160-7989-4672-8f78-2b7108de1844" />
 
 </details>
