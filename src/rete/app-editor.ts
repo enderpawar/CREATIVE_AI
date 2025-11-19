@@ -369,6 +369,10 @@ export class NeuralNetNode extends TradeNode {
         } as any))
         this.kind = 'neuralNet'
         this.category = 'ml-model'
+        this._controlHints = {
+            layers: { label: '히든 레이어 구조', title: '각 레이어의 뉴런 개수 (쉼표로 구분, 예: 64,32)' },
+            epochs: { label: '에포크 (학습 반복 횟수)', title: '학습 반복 횟수' }
+        }
     }
 }
 
