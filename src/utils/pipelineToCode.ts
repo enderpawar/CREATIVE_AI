@@ -487,13 +487,16 @@ print(f"훈련 R² 점수: {${varName}.score(X_train, y_train):.4f}")`
         }
         
         case 'neuralNet': {
-            const layers = node.controls?.layers || '64,32'
+            const layersStr = node.controls?.layers || '64,32'
             const epochs = node.controls?.epochs || 50
             
+            // layers 문자열을 Python 튜플로 변환 (예: "64,32" -> (64, 32))
+            const layersTuple = layersStr.split(',').map(s => s.trim()).join(', ')
+            
             return `# 신경망 모델 훈련
-${varName} = MLPClassifier(hidden_layer_sizes=(${layers}), max_iter=${epochs}, random_state=42)
+${varName} = MLPClassifier(hidden_layer_sizes=(${layersTuple}), max_iter=${epochs}, random_state=42)
 ${varName}.fit(X_train, y_train)
-print("신경망 훈련 완료: [${layers}] 레이어")
+print("신경망 훈련 완료: 레이어 구조 [${layersStr}]")
 print(f"훈련 정확도: {${varName}.score(X_train, y_train):.4f}")`
         }
         
