@@ -1,8 +1,9 @@
-<img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/4071ba62-1b64-4e4d-a94f-dbcd7ddf27b2" /><img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/765fcd36-81fe-4edb-a51c-6d1bd339f65b" /># ML Pipeline Builder
+# ML Pipeline Builder
 
 머신러닝 파이프라인을 시각적으로 설계하고 Python 코드로 자동 변환하는 노드 기반 에디터입니다.
 
 ![Animation](https://github.com/user-attachments/assets/68fcc332-ec0b-4e4e-8048-f018ed11d5d2)
+
 ## LogicListPage
 <img width="2560" height="1345" alt="image" src="https://github.com/user-attachments/assets/eae47ea8-4928-4904-a572-b05de7caca26" />
 <details> 
