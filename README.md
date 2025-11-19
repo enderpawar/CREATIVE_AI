@@ -1,31 +1,56 @@
-# ML Pipeline Builder
+<img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/4071ba62-1b64-4e4d-a94f-dbcd7ddf27b2" /><img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/765fcd36-81fe-4edb-a51c-6d1bd339f65b" /># ML Pipeline Builder
 
 머신러닝 파이프라인을 시각적으로 설계하고 Python 코드로 자동 변환하는 노드 기반 에디터입니다.
 
-## ✨ 주요 기능
+![Animation](https://github.com/user-attachments/assets/68fcc332-ec0b-4e4e-8048-f018ed11d5d2)
+## LogicListPage
+<img width="2560" height="1345" alt="image" src="https://github.com/user-attachments/assets/eae47ea8-4928-4904-a572-b05de7caca26" />
+> ### 세부 기능 소개
+> 1. 다크모드/ 라이트모드 토글 기능 지원
+![LogicListPage](https://github.com/user-attachments/assets/462ad6c9-1781-4274-b160-01abc0f4b70b)
+2. 로직 리스트 순서 바꾸기 기능 지원
+3. ![LogicListPage-index change](https://github.com/user-attachments/assets/98b56d2a-2ccc-447b-bd40-30e47e5f1ca6)
 
-### 🎨 시각적 노드 에디터
+## LogicEditorPage
+<img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/a54b0bb8-f359-4de5-a02a-0f2f4ae8dbd9" />
+> ### 세부 기능 소개
+1. 좌측 사이드바에서 노드를 끌어와 캔버스에 배치하기 기능 
+![LogicEditorPage-node create](https://github.com/user-attachments/assets/7e7f9e9f-2fe8-4598-babc-2247f849d72b)
+
+2. shift+좌클릭으로 캔버스 영역 내 노드 중복 선택 & 삭제/복사/잘라내기/붙여넣기 기능
+<img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/51156878-6819-47b3-a9e9-f5de2e917119" />
+
+3. Gemini API로 노드 배치 가이드 
+![LogicEditorPage-nodeguide](https://github.com/user-attachments/assets/7b8f8b36-2e0f-4e77-9aa7-adddd9d7f116)
+
+4. 노드 배치 가이드대로 캔버스에 노드 자동 배치하기 기능
+![LogicEditorPage-canvas auto set](https://github.com/user-attachments/assets/93bcda2e-ae76-4a72-ba1f-16fbddd30398)
+
+
+## 주요 기능
+
+### 시각적 노드 에디터
 - 드래그 앤 드롭으로 ML 파이프라인 구성
 - 10가지 전문 ML 노드 타입 제공
 - 실시간 그래프 시각화
 
-### 🤖 AI 자동 생성 (NEW!)
+###  AI 자동 생성 (NEW!)
 - **Gemini AI 통합**: 자연어 프롬프트로 파이프라인 자동 생성
 - 예시: "아이리스 데이터로 꽃 분류하는 랜덤 포레스트 모델 만들어줘"
 - 노드 배치 및 연결 자동화
 
-### 📊 데이터 관리
+### 데이터 관리
 - CSV 파일 업로드 및 관리
 - 데이터 미리보기 (행/열 개수, 샘플 표시)
 - Base64 인코딩으로 코드에 데이터 임베딩
 
-### 🐍 Python 코드 생성
+### Python 코드 생성
 - 노드 그래프 → Python 코드 자동 변환
 - Jupyter Notebook (.ipynb) 내보내기
 - Python 스크립트 (.py) 다운로드
 - 토폴로지 정렬로 실행 순서 최적화
 
-## 🚀 시작하기
+## 시작하기
 
 ### 설치
 ```bash
@@ -37,34 +62,27 @@ npm install
 npm run dev
 ```
 
-### Gemini AI 설정 (선택사항)
+### Gemini AI 설정 (선택사항-개발자 api가 이미 임베딩 됨)
+- 해당 프로그램은 Gemini Tier 1 이상 api 에서만 작동합니다.
 1. [Google AI Studio](https://aistudio.google.com/app/apikey)에서 무료 API 키 발급
 2. UI에서 직접 입력하거나 `.env` 파일에 설정:
 ```env
 VITE_GEMINI_API_KEY=your_api_key_here
 ```
 
-자세한 내용은 [Gemini AI 가이드](./GEMINI_AI_GUIDE.md)를 참고하세요.
-
-## 📚 문서
-
-- [ML 파이프라인 사용 가이드](./ML_PIPELINE_GUIDE.md)
-- [노드 타입 소개](./INTRODUCTION_NODE.md)
-- [코드 생성 원리](./CODE_GENERATION_EXPLAINED.md)
-- [Gemini AI 자동 생성](./GEMINI_AI_GUIDE.md)
-
 ## 🎯 사용 가능한 노드
 
 1. **Data Loader** - CSV 데이터 로드
-2. **Data Split** - Train/Test 분할
-3. **Scaler** - 데이터 정규화/스케일링
-4. **Feature Selection** - 특성 선택
-5. **Classifier** - 분류 모델 (Logistic, RandomForest, SVM 등)
-6. **Regressor** - 회귀 모델 (Linear, Ridge, Lasso 등)
-7. **Neural Network** - 신경망 모델
-8. **Evaluate** - 모델 평가
-9. **Predict** - 예측 수행
-10. **Hyperparam Tune** - 하이퍼파라미터 튜닝
+2. **Preprocessor** - 데이터 전처리
+3. **Data Split** - Train/Test 분할
+4. **Scaler** - 데이터 정규화/스케일링
+5. **Feature Selection** - 특성 선택
+6. **Classifier** - 분류 모델 (Logistic, RandomForest, SVM 등)
+7. **Regressor** - 회귀 모델 (Linear, Ridge, Lasso 등)
+8. **Neural Network** - 신경망 모델
+9. **Evaluate** - 모델 평가
+10. **Predict** - 예측 수행
+11. **Hyperparam Tune** - 하이퍼파라미터 튜닝
 
 ## 🔧 기술 스택
 
@@ -86,7 +104,7 @@ VITE_GEMINI_API_KEY=your_api_key_here
 
 ### 2. AI로 자동 생성 (NEW!)
 1. 우측 "🤖 AI 파이프라인 생성" 섹션으로 이동
-2. 프롬프트 입력: "타이타닉 생존 예측 RandomForest 모델"
+2. 프롬프트 입력: "이 시나리오는 **"대학생의 주간 학습 시간, 수면 시간, 이전 학기 학점"**을 기반으로 **"현재 학기의 예상 학점(평점)"**을 예측하는 선형 회귀(Regression) 문제입니다."
 3. "✨ AI로 파이프라인 생성하기" 클릭
 4. 자동 생성된 노드 확인 및 수정
 
