@@ -7,7 +7,8 @@
 ## LogicListPage
 <img width="2560" height="1345" alt="image" src="https://github.com/user-attachments/assets/eae47ea8-4928-4904-a572-b05de7caca26" />
 <details> 
-### 세부 기능 소개
+  <summary>LogicListPage 세부 기능 소개</summary>
+
 1. 다크모드/ 라이트모드 토글 기능 지원
 ![LogicListPage](https://github.com/user-attachments/assets/462ad6c9-1781-4274-b160-01abc0f4b70b)
   
@@ -18,6 +19,7 @@
 ## LogicEditorPage
 <img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/a54b0bb8-f359-4de5-a02a-0f2f4ae8dbd9" />
 <details>
+  <summary>LogicEditorPage 세부 기능 소개</summary>
 ###세부 기능 소개
 1. 좌측 사이드바에서 노드를 끌어와 캔버스에 배치하기 기능 
 ![LogicEditorPage-node create](https://github.com/user-attachments/assets/7e7f9e9f-2fe8-4598-babc-2247f849d72b)
