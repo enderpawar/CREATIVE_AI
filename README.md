@@ -5,15 +5,18 @@
 ![Animation](https://github.com/user-attachments/assets/68fcc332-ec0b-4e4e-8048-f018ed11d5d2)
 ## LogicListPage
 <img width="2560" height="1345" alt="image" src="https://github.com/user-attachments/assets/eae47ea8-4928-4904-a572-b05de7caca26" />
-> ### 세부 기능 소개
-> 1. 다크모드/ 라이트모드 토글 기능 지원
+<details> 
+### 세부 기능 소개
+1. 다크모드/ 라이트모드 토글 기능 지원
 ![LogicListPage](https://github.com/user-attachments/assets/462ad6c9-1781-4274-b160-01abc0f4b70b)
+  
 2. 로직 리스트 순서 바꾸기 기능 지원
 3. ![LogicListPage-index change](https://github.com/user-attachments/assets/98b56d2a-2ccc-447b-bd40-30e47e5f1ca6)
 
 ## LogicEditorPage
 <img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/a54b0bb8-f359-4de5-a02a-0f2f4ae8dbd9" />
-> ### 세부 기능 소개
+<details>
+### 세부 기능 소개
 1. 좌측 사이드바에서 노드를 끌어와 캔버스에 배치하기 기능 
 ![LogicEditorPage-node create](https://github.com/user-attachments/assets/7e7f9e9f-2fe8-4598-babc-2247f849d72b)
 
