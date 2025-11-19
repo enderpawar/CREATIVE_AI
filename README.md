@@ -25,7 +25,8 @@
 ![LogicEditorPage-node create](https://github.com/user-attachments/assets/7e7f9e9f-2fe8-4598-babc-2247f849d72b)
 
 2. shift+좌클릭으로 캔버스 영역 내 노드 중복 선택 & 삭제/복사/잘라내기/붙여넣기 기능
-<img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/51156878-6819-47b3-a9e9-f5de2e917119" />
+![LogicEditorPage-drag modal](https://github.com/user-attachments/assets/2324d725-92af-4e72-ba18-9246996b6ac8)
+
 
 3. Gemini API로 노드 배치 가이드 
 ![LogicEditorPage-nodeguide](https://github.com/user-attachments/assets/7b8f8b36-2e0f-4e77-9aa7-adddd9d7f116)
