@@ -79,12 +79,13 @@ npm run dev
 ```
 
 ### Gemini AI 설정 (선택사항-개발자 api가 이미 임베딩 됨)
-- 해당 프로그램은 Gemini Tier 1 이상 api 에서만 작동합니다.
+- 해당 프로그램은 Gemini Tier 1 이상 api 에서만 작동합니다. 
 1. [Google AI Studio](https://aistudio.google.com/app/apikey)에서 무료 API 키 발급
-2. UI에서 직접 입력하거나 `.env` 파일에 설정:
+2. UI에서 직접 입력하거나 `.env.example` 파일을 .env파일로 수정 후 파일 내에 설정:
 ```env
 VITE_GEMINI_API_KEY=your_api_key_here
 ```
+
 
 ## 🎯 사용 가능한 노드
 
