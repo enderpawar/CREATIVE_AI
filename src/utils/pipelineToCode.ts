@@ -260,8 +260,6 @@ print(${varName}.head())`
             
             return `# 훈련/테스트 데이터 분할
 # 목표 변수: '${targetColumn}'
-if '${targetColumn}' not in ${sourceVar}.columns:
-    raise ValueError(f"❌ 타겟 컬럼 '{targetColumn}'이(가) 데이터에 없습니다.\\n사용 가능한 컬럼: {${sourceVar}.columns.tolist()}")
 
 X = ${sourceVar}.drop('${targetColumn}', axis=1)
 y = ${sourceVar}['${targetColumn}']
