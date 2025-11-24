@@ -25,6 +25,8 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
     const [isEnhancing, setIsEnhancing] = useState(false);
     const [showIntentInput, setShowIntentInput] = useState(false);
     const [showEnhancedCode, setShowEnhancedCode] = useState(false); // AI 개선 코드 표시 여부
+    const [showApiKeyModal, setShowApiKeyModal] = useState(false); // API 키 모달
+    const [apiKeyInput, setApiKeyInput] = useState(''); // API 키 입력
 
     // localStorage에서 AI 개선 코드 불러오기
     useEffect(() => {
@@ -43,6 +45,14 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             setShowEnhancedCode(false);
         }
     }, [selectedLogicId]);
+
+    // API 키 불러오기
+    useEffect(() => {
+        const savedApiKey = localStorage.getItem('gemini_api_key');
+        if (savedApiKey) {
+            setApiKeyInput(savedApiKey);
+        }
+    }, []);
 
     // AI 개선 코드와 의도를 localStorage에 저장 (디바운싱)
     useEffect(() => {
@@ -781,6 +791,14 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 <div className="p-4 bg-neutral-900/60 rounded-2xl border border-neutral-800/70 flex flex-col">
                     <div className="flex items-center justify-between mb-2">
                         <h3 className="text-lg font-semibold text-gray-200">💡 코드 목적 설명</h3>
+                        <button
+                            onClick={() => setShowApiKeyModal(true)}
+                            className="px-3 py-1.5 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 hover:from-cyan-600/30 hover:to-blue-600/30 border border-cyan-500/30 hover:border-cyan-400/50 rounded-lg text-xs font-medium text-cyan-300 hover:text-cyan-200 transition-all duration-200 flex items-center gap-1.5 shadow-sm hover:shadow-cyan-500/20"
+                            title="Gemini API 키 설정"
+                        >
+                            <span className="text-base">⚙️</span>
+                            <span>API 키 설정</span>
+                        </button>
                     </div>
                     <textarea
                         value={userIntent}
@@ -801,9 +819,9 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                                 // Gemini API로 자유 형식 텍스트를 작성 팁 양식으로 변환
                                 toast.info('AI가 설명을 분석하고 있습니다...');
                                 
-                                const apiKey = localStorage.getItem('gemini_api_key') || import.meta.env.VITE_GEMINI_API_KEY;
+                                const apiKey = localStorage.getItem('gemini_api_key');
                                 if (!apiKey) {
-                                    toast.error('Gemini API 키를 설정해주세요.');
+                                    toast.error('Gemini API 키를 먼저 설정해주세요. (우측 상단 설정 버튼)');
                                     return;
                                 }
                                 
@@ -974,6 +992,85 @@ ${userIntent}
                                 📄 .py
                             </button>
                         </div>
+                    </div>
+                </div>
+            </div>
+        )}
+
+        {/* API 키 설정 모달 */}
+        {showApiKeyModal && (
+            <div
+                className="fixed inset-0 flex items-center justify-center z-50 p-4"
+                style={{ backgroundColor: 'rgba(0, 0, 0, 0.75)' }}
+                onClick={() => setShowApiKeyModal(false)}
+            >
+                <div 
+                    className="bg-neutral-900 rounded-2xl border border-neutral-700 shadow-2xl max-w-md w-full p-6"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <h2 className="text-2xl font-bold text-gray-100 mb-4">⚙️ Gemini API 키 설정</h2>
+                    
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-300 mb-2">
+                            API 키
+                        </label>
+                        <input
+                            type="password"
+                            value={apiKeyInput}
+                            onChange={(e) => setApiKeyInput(e.target.value)}
+                            placeholder="AIzaSy..."
+                            className="w-full p-3 bg-neutral-800 rounded border border-neutral-700 text-gray-200 focus:border-cyan-500 focus:outline-none"
+                        />
+                        <p className="mt-2 text-xs text-gray-400">
+                            🔗 <a 
+                                href="https://aistudio.google.com/app/apikey" 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-cyan-400 hover:underline"
+                            >
+                                Google AI Studio
+                            </a>에서 무료로 발급받을 수 있습니다.
+                        </p>
+                    </div>
+
+                    <div className="bg-neutral-800/50 p-3 rounded border border-neutral-700 mb-4">
+                        <p className="text-xs text-gray-300">
+                            💡 <strong>안전 정보:</strong><br/>
+                            API 키는 브라우저의 localStorage에만 저장되며, 서버로 전송되지 않습니다.
+                        </p>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => {
+                                if (apiKeyInput.trim()) {
+                                    localStorage.setItem('gemini_api_key', apiKeyInput.trim());
+                                    toast.success('API 키가 저장되었습니다!');
+                                    setShowApiKeyModal(false);
+                                } else {
+                                    toast.error('API 키를 입력해주세요.');
+                                }
+                            }}
+                            className="flex-1 px-4 py-2 text-base font-semibold text-white bg-cyan-600 rounded-lg hover:bg-cyan-500"
+                        >
+                            💾 저장
+                        </button>
+                        <button
+                            onClick={() => {
+                                localStorage.removeItem('gemini_api_key');
+                                setApiKeyInput('');
+                                toast.info('API 키가 삭제되었습니다.');
+                            }}
+                            className="flex-1 px-4 py-2 text-base font-semibold text-white bg-red-600 rounded-lg hover:bg-red-500"
+                        >
+                            🗑️ 삭제
+                        </button>
+                        <button
+                            onClick={() => setShowApiKeyModal(false)}
+                            className="px-4 py-2 text-base font-semibold text-gray-300 bg-neutral-700 rounded-lg hover:bg-neutral-600"
+                        >
+                            취소
+                        </button>
                     </div>
                 </div>
             </div>

@@ -617,9 +617,9 @@ print(f"훈련 정확도: {${varName}.score(X_train, y_train):.4f}")`
             
             // v4.0에서는 항상 prediction을 통해 평가 (predict 노드 필수)
             if (isRegression) {
-                evaluationCode = `# 모델 평가 (회귀)\nfrom sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error\nimport numpy as np\nmse = mean_squared_error(y_test, y_pred)\nrmse = np.sqrt(mse)\nmae = mean_absolute_error(y_test, y_pred)\nr2 = r2_score(y_test, y_pred)\nprint(f"Mean Squared Error (MSE): {mse:.4f}")\nprint(f"Root Mean Squared Error (RMSE): {rmse:.4f}")\nprint(f"Mean Absolute Error (MAE): {mae:.4f}")\nprint(f"R² Score: {r2:.4f}")`
+                evaluationCode = `# 모델 평가 (회귀)\nmse = mean_squared_error(y_test, y_pred)\nrmse = np.sqrt(mse)\nmae = mean_absolute_error(y_test, y_pred)\nr2 = r2_score(y_test, y_pred)\nprint(f"Mean Squared Error (MSE): {mse:.4f}")\nprint(f"Root Mean Squared Error (RMSE): {rmse:.4f}")\nprint(f"Mean Absolute Error (MAE): {mae:.4f}")\nprint(f"R² Score: {r2:.4f}")`
             } else {
-                evaluationCode = `# 모델 평가 (분류)\naccuracy = accuracy_score(y_test, y_pred)\nprint(f"Accuracy: {accuracy:.4f}")\nprint("\\nClassification Report:")\n# Data Split에서 저장된 모든 클래스 사용 (경고 방지)\nprint(classification_report(y_test, y_pred, labels=all_classes, zero_division=0))\nprint("\\nConfusion Matrix:")\nprint(confusion_matrix(y_test, y_pred, labels=all_classes))`
+                evaluationCode = `# 모델 평가 (분류)\naccuracy = accuracy_score(y_test, y_pred)\nf1 = f1_score(y_test, y_pred, average='weighted', labels=all_classes, zero_division=0)\nprint(f"Accuracy: {accuracy:.4f}")\nprint(f"F1 Score (weighted): {f1:.4f}")\nprint("\\nClassification Report:")\n# Data Split에서 저장된 모든 클래스 사용 (경고 방지)\nprint(classification_report(y_test, y_pred, labels=all_classes, zero_division=0))\nprint("\\nConfusion Matrix:")\nprint(confusion_matrix(y_test, y_pred, labels=all_classes))`
             }
             
             return evaluationCode
@@ -799,7 +799,7 @@ function generateImports(nodes: NodeData[]): string {
                 imports.add('from sklearn.neural_network import MLPClassifier')
                 break
             case 'evaluate':
-                imports.add('from sklearn.metrics import accuracy_score, classification_report, confusion_matrix')
+                imports.add('from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, mean_squared_error, r2_score, mean_absolute_error')
                 break
             case 'hyperparamTune': {
                 const htMethod = node.controls?.method?.value || node.controls?.method || 'GridSearchCV'

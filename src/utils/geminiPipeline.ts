@@ -1,11 +1,11 @@
 // Gemini API를 사용하여 Python 코드 생성
 
 /**
- * 환경변수에서 개발자의 Tier1 API 키를 가져옵니다.
- * 사용자는 별도의 API 키 설정 없이 바로 사용 가능합니다.
+ * localStorage에서 사용자가 입력한 API 키를 가져옵니다.
+ * 사용자는 UI에서 직접 Gemini API 키를 설정해야 합니다.
  */
 const getApiKey = (): string | null => {
-    return import.meta.env.VITE_GEMINI_API_KEY || null;
+    return localStorage.getItem('gemini_api_key') || null;
 };
 
 export interface NodeGuide {
