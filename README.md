@@ -105,7 +105,7 @@ VITE_GEMINI_API_KEY=your_api_key_here
 
 - **React 19** - UI 프레임워크
 - **Vite** - 빌드 도구
-- **Rete.js** - 노드 에디터 라이브러리
+- **Rete.js** - 노드 에디터 라이브러리 ([공식문서](https://retejs.org/))
 - **TypeScript** - 타입 안전성
 - **Gemini AI** - 자동 파이프라인 생성
 - **localStorage** - 데이터 영속성
