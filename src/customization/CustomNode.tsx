@@ -341,10 +341,12 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
       if (key === 'param1') {
         const node = props.data as any;
         lbl = node.param1Label || 'n_estimators: 트리 개수';
+        if (lbl && lbl.includes('(파라미터 없음)')) lbl = undefined;
       }
       if (key === 'param2') {
         const node = props.data as any;
         lbl = node.param2Label || 'max_depth: 최대 깊이';
+        if (lbl === '' || (lbl && lbl.includes('(추가 파라미터 없음)'))) lbl = undefined;
       }
     }
     if (label === 'Regressor') {
@@ -352,12 +354,12 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
       if (key === 'param1') {
         const node = props.data as any;
         lbl = node.param1Label || 'alpha: 정규화 강도';
-        if (lbl.includes('(파라미터 없음)')) lbl = undefined;
+        if (lbl && lbl.includes('(파라미터 없음)')) lbl = undefined;
       }
       if (key === 'param2') {
         const node = props.data as any;
         lbl = node.param2Label || 'max_depth: 최대 깊이';
-        if (lbl === '' || lbl.includes('(추가 파라미터 없음)')) lbl = undefined;
+        if (lbl === '' || (lbl && lbl.includes('(추가 파라미터 없음)'))) lbl = undefined;
       }
     }
     if (label === 'Feature Selection') {
