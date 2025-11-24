@@ -301,6 +301,9 @@ export class FeatureSelectionNode extends TradeNode {
 }
 
 export class ClassifierNode extends TradeNode {
+    public param1Label: string = 'n_estimators: 트리 개수'
+    public param2Label: string = 'max_depth: 최대 깊이'
+    
     constructor() {
         super('Classifier')
         this.addInput('train', new ClassicPreset.Input(numberSocket, '훈련용'))
@@ -316,22 +319,85 @@ export class ClassifierNode extends TradeNode {
             { value: 'GradientBoosting', label: 'Gradient Boosting (부스팅)' }
         ]
         
-        this.addControl('algorithm', new SelectControl(algorithmOptions, 'RandomForest'))
-        this.addControl('n_estimators', new ClassicPreset.InputControl('number', { 
+        const algorithmControl = new SelectControl(algorithmOptions, 'RandomForest', (value) => {
+            this.updateParametersForAlgorithm(value)
+            if (currentArea) {
+                try {
+                    currentArea.update('node', this.id)
+                } catch (e) {
+                    console.error('Failed to update area:', e)
+                }
+            }
+        })
+        
+        this.addControl('algorithm', algorithmControl)
+        this.addControl('param1', new ClassicPreset.InputControl('number', { 
             initial: 100,
             step: 10,
-            min: 10
+            min: 1
         } as any))
+        this.addControl('param2', new ClassicPreset.InputControl('number', { 
+            initial: 10,
+            step: 1,
+            min: 1
+        } as any))
+        
+        // 초기 알고리즘에 맞게 파라미터 라벨 설정
+        this.updateParametersForAlgorithm('RandomForest')
+        
         this.kind = 'classifier'
         this.category = 'ml-model'
-        this._controlHints = {
-            algorithm: { label: '알고리즘', title: '분류 알고리즘 선택' },
-            n_estimators: { label: '트리 개수', title: 'RandomForest/GradientBoosting 전용' }
+    }
+    
+    updateParametersForAlgorithm(algorithm: string) {
+        const param1 = this.controls['param1'] as ClassicPreset.InputControl<'number'>
+        const param2 = this.controls['param2'] as ClassicPreset.InputControl<'number'>
+        
+        switch(algorithm) {
+            case 'RandomForest':
+                this.param1Label = 'n_estimators: 트리 개수'
+                this.param2Label = 'max_depth: 최대 깊이'
+                if (param1) param1.value = 100
+                if (param2) param2.value = 10
+                break
+            case 'LogisticRegression':
+                this.param1Label = 'C: 정규화 강도 역수 (작을수록 강함)'
+                this.param2Label = 'max_iter: 최대 반복 횟수'
+                if (param1) param1.value = 1.0
+                if (param2) param2.value = 1000
+                break
+            case 'SVM':
+                this.param1Label = 'C: 정규화 파라미터'
+                this.param2Label = 'kernel: 커널 타입 (0=rbf, 1=linear, 2=poly)'
+                if (param1) param1.value = 1.0
+                if (param2) param2.value = 0
+                break
+            case 'DecisionTree':
+                this.param1Label = 'max_depth: 최대 깊이'
+                this.param2Label = 'min_samples_split: 분할 최소 샘플 수'
+                if (param1) param1.value = 10
+                if (param2) param2.value = 2
+                break
+            case 'KNN':
+                this.param1Label = 'n_neighbors: 이웃 개수'
+                this.param2Label = 'weights: 가중치 (0=uniform, 1=distance)'
+                if (param1) param1.value = 5
+                if (param2) param2.value = 0
+                break
+            case 'GradientBoosting':
+                this.param1Label = 'n_estimators: 트리 개수'
+                this.param2Label = 'max_depth: 최대 깊이 (기본값: 3)'
+                if (param1) param1.value = 100
+                if (param2) param2.value = 3
+                break
         }
     }
 }
 
 export class RegressorNode extends TradeNode {
+    public param1Label: string = 'alpha: 정규화 강도'
+    public param2Label: string = 'max_depth: 최대 깊이'
+    
     constructor() {
         super('Regressor')
         this.addInput('train', new ClassicPreset.Input(numberSocket, '훈련용'))
@@ -347,11 +413,69 @@ export class RegressorNode extends TradeNode {
             { value: 'GradientBoostingRegressor', label: 'Gradient Boosting Regressor' }
         ]
         
-        this.addControl('algorithm', new SelectControl(algorithmOptions, 'LinearRegression'))
+        const algorithmControl = new SelectControl(algorithmOptions, 'LinearRegression', (value) => {
+            this.updateParametersForAlgorithm(value)
+            if (currentArea) {
+                try {
+                    currentArea.update('node', this.id)
+                } catch (e) {
+                    console.error('Failed to update area:', e)
+                }
+            }
+        })
+        
+        this.addControl('algorithm', algorithmControl)
+        this.addControl('param1', new ClassicPreset.InputControl('number', { 
+            initial: 1.0,
+            step: 0.1,
+            min: 0.01
+        } as any))
+        this.addControl('param2', new ClassicPreset.InputControl('number', { 
+            initial: 10,
+            step: 1,
+            min: 1
+        } as any))
+        
+        // 초기 알고리즘에 맞게 파라미터 라벨 설정
+        this.updateParametersForAlgorithm('LinearRegression')
+        
         this.kind = 'regressor'
         this.category = 'ml-model'
-        this._controlHints = {
-            algorithm: { label: '알고리즘', title: '회귀 알고리즘 선택' }
+    }
+    
+    updateParametersForAlgorithm(algorithm: string) {
+        const param1 = this.controls['param1'] as ClassicPreset.InputControl<'number'>
+        const param2 = this.controls['param2'] as ClassicPreset.InputControl<'number'>
+        
+        switch(algorithm) {
+            case 'LinearRegression':
+                this.param1Label = '(파라미터 없음)'
+                this.param2Label = ''
+                break
+            case 'Ridge':
+            case 'Lasso':
+                this.param1Label = 'alpha: 정규화 강도 (클수록 강함)'
+                this.param2Label = '(추가 파라미터 없음)'
+                if (param1) param1.value = 1.0
+                break
+            case 'RandomForestRegressor':
+                this.param1Label = 'n_estimators: 트리 개수'
+                this.param2Label = 'max_depth: 최대 깊이'
+                if (param1) param1.value = 100
+                if (param2) param2.value = 10
+                break
+            case 'SVR':
+                this.param1Label = 'C: 정규화 파라미터'
+                this.param2Label = 'kernel: 커널 타입 (0=rbf, 1=linear, 2=poly)'
+                if (param1) param1.value = 1.0
+                if (param2) param2.value = 0
+                break
+            case 'GradientBoostingRegressor':
+                this.param1Label = 'n_estimators: 트리 개수'
+                this.param2Label = 'max_depth: 최대 깊이 (기본값: 3)'
+                if (param1) param1.value = 100
+                if (param2) param2.value = 3
+                break
         }
     }
 }

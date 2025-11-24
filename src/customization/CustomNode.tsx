@@ -338,7 +338,27 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
     }
     if (label === 'Classifier') {
       if (key === 'algorithm') lbl = '알고리즘';
-      if (key === 'n_estimators') lbl = '트리 개수';
+      if (key === 'param1') {
+        const node = props.data as any;
+        lbl = node.param1Label || 'n_estimators: 트리 개수';
+      }
+      if (key === 'param2') {
+        const node = props.data as any;
+        lbl = node.param2Label || 'max_depth: 최대 깊이';
+      }
+    }
+    if (label === 'Regressor') {
+      if (key === 'algorithm') lbl = '알고리즘';
+      if (key === 'param1') {
+        const node = props.data as any;
+        lbl = node.param1Label || 'alpha: 정규화 강도';
+        if (lbl.includes('(파라미터 없음)')) lbl = undefined;
+      }
+      if (key === 'param2') {
+        const node = props.data as any;
+        lbl = node.param2Label || 'max_depth: 최대 깊이';
+        if (lbl === '' || lbl.includes('(추가 파라미터 없음)')) lbl = undefined;
+      }
     }
     if (label === 'Feature Selection') {
       if (key === 'method') lbl = '선택 방법';
@@ -497,6 +517,11 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
         // InputControl인 경우 CustomInput 사용
         const ctrl: any = control as any;
         const isInputControl = ctrl.type === 'text' || ctrl.type === 'number';
+        
+        // lbl이 undefined면 컨트롤 자체를 렌더링하지 않음 (숨김 처리)
+        if (lbl === undefined) {
+          return null;
+        }
         
         if (isInputControl) {
           const options = ctrl.options || {};

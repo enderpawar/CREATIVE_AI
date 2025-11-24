@@ -431,23 +431,73 @@ X_test = X_test_selected`
         
         case 'classifier': {
             const algorithm = node.controls?.algorithm || 'RandomForest'
-            const nEstimators = node.controls?.n_estimators || 100
             
             let modelCode = ''
-            if (algorithm === 'RandomForest') {
-                modelCode = `RandomForestClassifier(n_estimators=${nEstimators}, random_state=42)`
-            } else if (algorithm === 'LogisticRegression') {
-                modelCode = `LogisticRegression(random_state=42, max_iter=1000)`
-            } else if (algorithm === 'SVM') {
-                modelCode = `SVC(random_state=42)`
-            } else if (algorithm === 'DecisionTree') {
-                modelCode = `DecisionTreeClassifier(random_state=42)`
-            } else if (algorithm === 'KNN') {
-                modelCode = `KNeighborsClassifier(n_neighbors=5)`
-            } else if (algorithm === 'GradientBoosting') {
-                modelCode = `GradientBoostingClassifier(n_estimators=${nEstimators}, random_state=42)`
-            } else {
-                modelCode = `RandomForestClassifier(n_estimators=${nEstimators}, random_state=42)`
+            const params: string[] = []
+            
+            switch(algorithm) {
+                case 'RandomForest': {
+                    const nEstimators = node.controls?.n_estimators || node.controls?.param1 || 100
+                    const maxDepth = node.controls?.max_depth || node.controls?.param2 || 10
+                    params.push(`n_estimators=${nEstimators}`)
+                    if (maxDepth && maxDepth !== 'None') params.push(`max_depth=${maxDepth}`)
+                    params.push('random_state=42')
+                    modelCode = `RandomForestClassifier(${params.join(', ')})`
+                    break
+                }
+                case 'LogisticRegression': {
+                    const C = node.controls?.C || node.controls?.param1 || 1.0
+                    const maxIter = node.controls?.max_iter || node.controls?.param2 || 1000
+                    params.push(`C=${C}`)
+                    params.push(`max_iter=${maxIter}`)
+                    params.push('random_state=42')
+                    modelCode = `LogisticRegression(${params.join(', ')})`
+                    break
+                }
+                case 'SVM': {
+                    const C = node.controls?.C || node.controls?.param1 || 1.0
+                    const kernelNum = node.controls?.kernel || node.controls?.param2 || 0
+                    const kernelMap = ['rbf', 'linear', 'poly']
+                    const kernel = kernelMap[kernelNum] || 'rbf'
+                    params.push(`C=${C}`)
+                    params.push(`kernel='${kernel}'`)
+                    params.push('random_state=42')
+                    modelCode = `SVC(${params.join(', ')})`
+                    break
+                }
+                case 'DecisionTree': {
+                    const maxDepth = node.controls?.max_depth || node.controls?.param1 || 10
+                    const minSamplesSplit = node.controls?.min_samples_split || node.controls?.param2 || 2
+                    if (maxDepth && maxDepth !== 'None') params.push(`max_depth=${maxDepth}`)
+                    params.push(`min_samples_split=${minSamplesSplit}`)
+                    params.push('random_state=42')
+                    modelCode = `DecisionTreeClassifier(${params.join(', ')})`
+                    break
+                }
+                case 'KNN': {
+                    const nNeighbors = node.controls?.n_neighbors || node.controls?.param1 || 5
+                    const weightsNum = node.controls?.weights || node.controls?.param2 || 0
+                    const weights = weightsNum === 1 ? 'distance' : 'uniform'
+                    params.push(`n_neighbors=${nNeighbors}`)
+                    params.push(`weights='${weights}'`)
+                    modelCode = `KNeighborsClassifier(${params.join(', ')})`
+                    break
+                }
+                case 'GradientBoosting': {
+                    const nEstimators = node.controls?.n_estimators || node.controls?.param1 || 100
+                    const maxDepth = node.controls?.max_depth || node.controls?.param2 || 3
+                    const learningRate = node.controls?.learning_rate || 0.1
+                    params.push(`n_estimators=${nEstimators}`)
+                    params.push(`learning_rate=${learningRate}`)
+                    params.push(`max_depth=${maxDepth}`)
+                    params.push('random_state=42')
+                    modelCode = `GradientBoostingClassifier(${params.join(', ')})`
+                    break
+                }
+                default: {
+                    const nEstimators = node.controls?.n_estimators || node.controls?.param1 || 100
+                    modelCode = `RandomForestClassifier(n_estimators=${nEstimators}, random_state=42)`
+                }
             }
             
             return `# 모델 훈련 (${algorithm})
@@ -461,20 +511,55 @@ print(f"훈련 정확도: {${varName}.score(X_train, y_train):.4f}")`
             const algorithm = node.controls?.algorithm || 'LinearRegression'
             
             let modelCode = ''
-            if (algorithm === 'LinearRegression') {
-                modelCode = `LinearRegression()`
-            } else if (algorithm === 'Ridge') {
-                modelCode = `Ridge(random_state=42)`
-            } else if (algorithm === 'Lasso') {
-                modelCode = `Lasso(random_state=42)`
-            } else if (algorithm === 'RandomForestRegressor') {
-                modelCode = `RandomForestRegressor(random_state=42)`
-            } else if (algorithm === 'SVR') {
-                modelCode = `SVR()`
-            } else if (algorithm === 'GradientBoostingRegressor') {
-                modelCode = `GradientBoostingRegressor(random_state=42)`
-            } else {
-                modelCode = `LinearRegression()`
+            const params: string[] = []
+            
+            switch(algorithm) {
+                case 'LinearRegression': {
+                    modelCode = `LinearRegression()`
+                    break
+                }
+                case 'Ridge':
+                case 'Lasso': {
+                    const alpha = node.controls?.alpha || node.controls?.param1 || 1.0
+                    params.push(`alpha=${alpha}`)
+                    params.push('random_state=42')
+                    const className = algorithm === 'Ridge' ? 'Ridge' : 'Lasso'
+                    modelCode = `${className}(${params.join(', ')})`
+                    break
+                }
+                case 'RandomForestRegressor': {
+                    const nEstimators = node.controls?.n_estimators || node.controls?.param1 || 100
+                    const maxDepth = node.controls?.max_depth || node.controls?.param2 || 10
+                    params.push(`n_estimators=${nEstimators}`)
+                    if (maxDepth && maxDepth !== 'None') params.push(`max_depth=${maxDepth}`)
+                    params.push('random_state=42')
+                    modelCode = `RandomForestRegressor(${params.join(', ')})`
+                    break
+                }
+                case 'SVR': {
+                    const C = node.controls?.C || node.controls?.param1 || 1.0
+                    const kernelNum = node.controls?.kernel || node.controls?.param2 || 0
+                    const kernelMap = ['rbf', 'linear', 'poly']
+                    const kernel = kernelMap[kernelNum] || 'rbf'
+                    params.push(`C=${C}`)
+                    params.push(`kernel='${kernel}'`)
+                    modelCode = `SVR(${params.join(', ')})`
+                    break
+                }
+                case 'GradientBoostingRegressor': {
+                    const nEstimators = node.controls?.n_estimators || node.controls?.param1 || 100
+                    const maxDepth = node.controls?.max_depth || node.controls?.param2 || 3
+                    const learningRate = node.controls?.learning_rate || 0.1
+                    params.push(`n_estimators=${nEstimators}`)
+                    params.push(`learning_rate=${learningRate}`)
+                    params.push(`max_depth=${maxDepth}`)
+                    params.push('random_state=42')
+                    modelCode = `GradientBoostingRegressor(${params.join(', ')})`
+                    break
+                }
+                default: {
+                    modelCode = `LinearRegression()`
+                }
             }
             
             return `# 모델 훈련 (${algorithm})
@@ -489,7 +574,7 @@ print(f"훈련 R² 점수: {${varName}.score(X_train, y_train):.4f}")`
             const epochs = node.controls?.epochs || 50
             
             // layers 문자열을 Python 튜플로 변환 (예: "64,32" -> (64, 32))
-            const layersTuple = layersStr.split(',').map(s => s.trim()).join(', ')
+            const layersTuple = layersStr.split(',').map((s: string) => s.trim()).join(', ')
             
             return `# 신경망 모델 훈련
 ${varName} = MLPClassifier(hidden_layer_sizes=(${layersTuple}), max_iter=${epochs}, random_state=42)
