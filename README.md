@@ -43,6 +43,10 @@
 <img width="1838" height="986" alt="image" src="https://github.com/user-attachments/assets/ab49808e-b9c0-4f77-90a7-a2a2b3c2ae80" />
 - 대학생의 주간 학습 시간, 수면 시간, 이전 학기 학점을 기반으로 현재 학기의 예상 학점(평점)을 예측하는 선형 회귀(Regression) 문제 시나리오를 기준으로 파이썬코드를 출력하는 양식을 보여드립니다. 사용된 csv는 현재 github 리포지토리 내 example 폴더에 있습니다
 
+### 사용 예시 영상(ver2.1 캔버스에 노드 자동 배치 기능) : https://youtu.be/W5-blXBJotk
+<img width="2553" height="1171" alt="image" src="https://github.com/user-attachments/assets/e7d2672e-5f3d-4db0-82d6-a3cea71f3225" />
+- 캔버스에 노드를 자동 배치하는 기능을 추가한 작동 영상입니다.
+
 ## 주요 기능 요약
 
 ### 시각적 노드 에디터
@@ -105,7 +109,7 @@ VITE_GEMINI_API_KEY=your_api_key_here
 
 - **React 19** - UI 프레임워크
 - **Vite** - 빌드 도구
-- **Rete.js** - 노드 에디터 라이브러리
+- **Rete.js** - 노드 에디터 라이브러리 ([공식문서](https://retejs.org/))
 - **TypeScript** - 타입 안전성
 - **Gemini AI** - 자동 파이프라인 생성
 - **localStorage** - 데이터 영속성
@@ -151,9 +155,9 @@ MIT License
 
 > ### 이전 프로젝트 히스토리
 
-본 프로젝트는 Trade Builder(노드 기반 주식매매 프로그램) 프로젝트에서 시작되어 CREATIVE AI로 전환되었습니다.
-CREATIVE AI의 제작자(enderpawar)는 해당 프로젝트에서 UI 제작을 담당하였으며 다른 사람이 작성한 코드 없이 오직 본인이 작성한 UI를 개선시켜
-CREATIVE AI에서 노드 편집기 및 메인 페이지로 활용하였음을 공지합니다.
+본 프로젝트의 UI는 Trade Builder(노드 기반 주식매매 프로그램 - 동아리 팀 프로젝트)의 UI를 개선시켜 제작되었습니다. 
+CREATIVE AI의 제작자(enderpawar)는 해당 프로젝트에서 프론트엔드 파트를 담당하였으며, Rete js를 사용해 UI를 직접 개발하였습니다. 
+다른 사람이 작성한 코드 없이 이전 프로젝트에서 오직 본인이 작성한 UI를 개선시켜 CREATIVE AI에서 노드 편집기 및 메인 페이지로 활용하였음을 공지합니다.
 프로젝트 주소 : https://github.com/Trade-Builder/Trade-Builder-Client
 <details>
 <summary>레거시 문서 보기</summary>
