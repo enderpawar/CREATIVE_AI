@@ -1,6 +1,6 @@
-# ML Pipeline Builder
+# [ML Pipeline Builder](https://enderpawar.github.io/CREATIVE_AI/)
 
-머신러닝 파이프라인을 시각적으로 설계하고 Python 코드로 자동 변환하는 노드 기반 에디터입니다.
+머신러닝 파이프라인을 시각적으로 설계하고 Python 코드로 자동 변환하는 노드 기반 에디터입니다. [배포 링크](https://enderpawar.github.io/CREATIVE_AI/)
 
 ![Animation](https://github.com/user-attachments/assets/68fcc332-ec0b-4e4e-8048-f018ed11d5d2)
 
