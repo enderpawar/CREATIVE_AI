@@ -793,11 +793,11 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                         <h3 className="text-lg font-semibold text-gray-200">💡 코드 목적 설명</h3>
                         <button
                             onClick={() => setShowApiKeyModal(true)}
-                            className="px-3 py-1.5 bg-gradient-to-r from-cyan-600/20 to-blue-600/20 hover:from-cyan-600/30 hover:to-blue-600/30 border border-cyan-500/30 hover:border-cyan-400/50 rounded-lg text-xs font-medium text-cyan-300 hover:text-cyan-200 transition-all duration-200 flex items-center gap-1.5 shadow-sm hover:shadow-cyan-500/20"
+                            className="px-3 py-1.5 bg-gradient-to-r from-cyan-500 to-blue-500 border border-cyan-400/30 rounded-lg text-xs font-semibold text-white transition-all duration-200 flex items-center gap-1.5 shadow-md"
                             title="Gemini API 키 설정"
                         >
                             <span className="text-base">⚙️</span>
-                            <span>API 키 설정</span>
+                            <span>API 설정</span>
                         </button>
                     </div>
                     <textarea
@@ -1033,9 +1033,9 @@ ${userIntent}
                         </p>
                     </div>
 
-                    <div className="bg-neutral-800/50 p-3 rounded border border-neutral-700 mb-4">
-                        <p className="text-xs text-gray-300">
-                            💡 <strong>안전 정보:</strong><br/>
+                    <div className="bg-slate-100 dark:bg-neutral-800/50 p-3 rounded border border-slate-300 dark:border-neutral-700 mb-4">
+                        <p className="text-xs text-slate-700 dark:text-gray-300">
+                            💡 <strong className="text-slate-900 dark:text-gray-100">안전 정보:</strong><br/>
                             API 키는 브라우저의 localStorage에만 저장되며, 서버로 전송되지 않습니다.
                         </p>
                     </div>
@@ -1051,7 +1051,7 @@ ${userIntent}
                                     toast.error('API 키를 입력해주세요.');
                                 }
                             }}
-                            className="flex-1 px-4 py-2 text-base font-semibold text-white bg-cyan-600 rounded-lg hover:bg-cyan-500"
+                            className="flex-1 px-4 py-2 text-base font-semibold text-white bg-blue-600 rounded-lg hover:bg-blue-700 shadow-sm"
                         >
                             💾 저장
                         </button>
@@ -1061,13 +1061,13 @@ ${userIntent}
                                 setApiKeyInput('');
                                 toast.info('API 키가 삭제되었습니다.');
                             }}
-                            className="flex-1 px-4 py-2 text-base font-semibold text-white bg-red-600 rounded-lg hover:bg-red-500"
+                            className="flex-1 px-4 py-2 text-base font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-sm"
                         >
                             🗑️ 삭제
                         </button>
                         <button
                             onClick={() => setShowApiKeyModal(false)}
-                            className="px-4 py-2 text-base font-semibold text-gray-300 bg-neutral-700 rounded-lg hover:bg-neutral-600"
+                            className="px-4 py-2 text-base font-semibold text-slate-700 dark:text-gray-300 bg-slate-200 dark:bg-neutral-700 border border-slate-300 dark:border-neutral-600 rounded-lg hover:bg-slate-300 dark:hover:bg-neutral-600 shadow-sm"
                         >
                             취소
                         </button>
