@@ -152,8 +152,8 @@ MIT License
 > ### 이전 프로젝트 히스토리
 
 본 프로젝트는 Trade Builder(노드 기반 주식매매 프로그램) 프로젝트에서 시작되어 CREATIVE AI로 전환되었습니다.
-CREATIVE AI의 제작자(enderpawar)는 해당 프로젝트에서 UI 제작을 담당하였으며 다른 사람이 작성한 코드 없이 오직 본인이 작성한 UI를 개선시켜
-CREATIVE AI에서 노드 편집기 및 메인 페이지로 활용하였음을 공지합니다.
+CREATIVE AI의 제작자(enderpawar)는 해당 프로젝트에서 UI 제작을 담당하였으며, Rete js를 사용해 UI를 직접 개발하였습니다. 
+다른 사람이 작성한 코드 없이 이전 프로젝트에서 오직 본인이 작성한 UI를 개선시켜 CREATIVE AI에서 노드 편집기 및 메인 페이지로 활용하였음을 공지합니다.
 프로젝트 주소 : https://github.com/Trade-Builder/Trade-Builder-Client
 <details>
 <summary>레거시 문서 보기</summary>
