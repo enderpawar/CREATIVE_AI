@@ -42,7 +42,7 @@
 ### 사용 예시 영상 : https://www.youtube.com/watch?v=rLLQUx_rLU4
 <img width="1838" height="986" alt="image" src="https://github.com/user-attachments/assets/ab49808e-b9c0-4f77-90a7-a2a2b3c2ae80" />
 - 대학생의 주간 학습 시간, 수면 시간, 이전 학기 학점을 기반으로 현재 학기의 예상 학점(평점)을 예측하는 선형 회귀(Regression) 문제 시나리오를 기준으로 파이썬코드를 출력하는 양식을 보여드립니다. 사용된 csv는 현재 github 리포지토리 내 example 폴더에 있습니다
-
+### 사용 예시 영상(ver2. 캔버스에 노드 자동 배치 기능) : https://youtu.be/W5-blXBJotk
 ## 주요 기능 요약
 
 ### 시각적 노드 에디터
