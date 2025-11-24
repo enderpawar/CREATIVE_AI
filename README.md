@@ -136,6 +136,9 @@ VITE_GEMINI_API_KEY=your_api_key_here
 
 ## 🌟 주요 업데이트
 
+### v2.1 - AI 캔버스 자동배치 기능
+- 캔버스에 추가하기 버튼을 눌러 노드를 자동 배치
+- 
 ### v2.0 - AI 자동 생성 추가
 - Gemini AI 통합
 - 자연어 프롬프트 지원
