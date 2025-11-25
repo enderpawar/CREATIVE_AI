@@ -12,9 +12,11 @@
 
 1. 다크모드/ 라이트모드 토글 기능 
 ![LogicListPage](https://github.com/user-attachments/assets/462ad6c9-1781-4274-b160-01abc0f4b70b)
-  
+- 사용자 선호 환경에 따라 다크모드 / 라이트모드로 전환할 수 있습니다.
+
 2. 로직 리스트 순서 바꾸기 기능 
 ![LogicListPage-index change](https://github.com/user-attachments/assets/98b56d2a-2ccc-447b-bd40-30e47e5f1ca6)
+- 작성한 로직 리스트의 순서를 바꿀 수 있습니다.
 </details>
 
 ## LogicEditorPage
@@ -23,20 +25,25 @@
 <details>
   <summary>LogicEditorPage 세부 기능 소개</summary>
   
-1. 좌측 사이드바에서 노드를 끌어와 캔버스에 배치하기 기능 
+1. 좌측 사이드바에서 노드를 끌어와 캔버스에 배치하기 
 ![LogicEditorPage-node create](https://github.com/user-attachments/assets/7e7f9e9f-2fe8-4598-babc-2247f849d72b)
-
-2. shift+좌클릭으로 캔버스 영역 내 노드 중복 선택 & 삭제/복사/잘라내기/붙여넣기 기능
+- AI 학습 코드를 생성하기 위해 복잡한 코드 설계가 필요 없이 비주얼 노드를 이용하여 보다 직관적으로 코드를 설계할 수 있습니다. 
+  
+2. shift+좌클릭으로 캔버스 영역 내 노드 중복 선택 & 삭제/복사/잘라내기/붙여넣기 메뉴 홀더
 ![LogicEditorPage-drag modal](https://github.com/user-attachments/assets/2324d725-92af-4e72-ba18-9246996b6ac8)
+- 편리한 드래그 홀더 기능을 통해 쉽게 파이프라인 캔버스를 편집할 수 있습니다.
 
 3. Gemini API로 노드 배치 가이드 
 ![LogicEditorPage-nodeguide](https://github.com/user-attachments/assets/7b8f8b36-2e0f-4e77-9aa7-adddd9d7f116)
+- 파이썬 코드에 대한 지식이 전무한 초보자도 gemini api가 제공하는 노드별 기능 설명 및 input output 배치 가이드를 통해 파이프라인 설계를 학습하고 배울 수 있습니다.
 
-4. 노드 배치 가이드대로 캔버스에 노드 자동 배치하기 기능
+4. 노드 자동 배치  
 ![LogicEditorPage-canvas auto set](https://github.com/user-attachments/assets/93bcda2e-ae76-4a72-ba1f-16fbddd30398)
+- 복잡하게 노드를 일일히 배치할 필요없이 Gemini가 작성한 노드 배치 가이드를 토대로 캔버스에 노드를 자동배치할 수 있습니다.
 
-5. 작성한 파이프라인을 기준으로 파이썬 코드 파싱 기능 (작성한 코드는 py, ipynb(주피터) 코드로 다운 가능)
+5. 작성한 코드는 py, ipynb(주피터) 코드로 다운 가능
 ![LogicEditorPage-pythoncode](https://github.com/user-attachments/assets/34af6453-1f6e-4b80-99ae-323b662795b3)
+- 배치한 노드 파이프라인은 json 파일로 저장된 후, pipelineTocode 기능을 통해 json 파일에서 python 코드로 파싱되어 사용자가 의도한 AI 학습 코드를 출력합니다. 파싱된 AI 코드는 py 또는 ipynb 파일로 다운로드 가능합니다.
 </details>
 
 ### 사용 예시 영상 : https://www.youtube.com/watch?v=rLLQUx_rLU4
@@ -83,7 +90,7 @@ npm run dev
 ```
 
 ### Gemini AI 설정 
-- 해당 프로그램은 Gemini Tier 1 이상 api 에서만 작동합니다. Google AI Studio API는 Tier 1 단계까지 무료 발급이 가능하므로 API 발급 후 사용해주시길 바랍니다. 
+- 해당 프로그램은 Tier 1 이상 Gemini api 에서 작동합니다. Google AI Studio API는 Tier 1 단계까지 무료 발급이 가능하므로 API 발급 후 사용해주시길 바랍니다. 
  [Google AI Studio](https://aistudio.google.com/app/apikey)에서 무료 API 키 발급
 
 
