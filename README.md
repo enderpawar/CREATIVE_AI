@@ -27,7 +27,7 @@
   
 1. 좌측 사이드바에서 노드를 끌어와 캔버스에 배치하기 
 ![LogicEditorPage-node create](https://github.com/user-attachments/assets/7e7f9e9f-2fe8-4598-babc-2247f849d72b)
-![LogicEditorPage2](https://github.com/user-attachments/assets/b5d9716a-4de4-4c69-bb95-1b9660a95008)
+![LogicEditorPage2](https://github.com/user-attachments/assets/d8ff0d92-614f-4278-94f6-11c1c0e0f930)
 - AI 학습 코드를 생성하기 위해 복잡한 코드 설계가 필요 없이 비주얼 노드를 이용하여 보다 직관적으로 코드를 설계할 수 있습니다. 
   
 2. shift+좌클릭으로 캔버스 영역 내 노드 중복 선택 & 삭제/복사/잘라내기/붙여넣기 메뉴 홀더
