@@ -36,7 +36,7 @@
 
 3. Gemini API로 노드 배치 가이드 
 ![LogicEditorPage-nodeguide](https://github.com/user-attachments/assets/7b8f8b36-2e0f-4e77-9aa7-adddd9d7f116)
-- 파이썬 코드에 대한 지식이 전무한 초보자도 gemini api가 제공하는 노드별 기능 설명 및 input output 배치 가이드를 통해 파이프라인 설계를 학습하고 배울 수 있습니다.
+- 파이썬 코드에 대한 지식이 전무한 초보자도 gemini api가 제공하는 노드별 기능 설명 및 input output 배치 가이드를 통해 파이프라인 설계를 보다 쉽게 학습할 수 있습니다
 
 4. 노드 자동 배치  
 ![LogicEditorPage-canvas auto set](https://github.com/user-attachments/assets/93bcda2e-ae76-4a72-ba1f-16fbddd30398)
