@@ -107,7 +107,8 @@ npm run dev
 8. **Neural Network** - 신경망 모델
 9. **Evaluate** - 모델 평가
 10. **Predict** - 예측 수행
-11. **Hyperparam Tune** - 하이퍼파라미터 튜닝
+11. **Clustering** - 클러스터링
+12. **Hyperparam Tune** - 하이퍼파라미터 튜닝
 
 ## 🔧 기술 스택
 
