@@ -259,7 +259,31 @@ print(${varName}.head())`
             const targetColumn = node.controls?.targetColumn || 'target'
             const sourceVar = getSourceVarName('data')
             
-            return `# 훈련/테스트 데이터 분할
+            // 다음 노드가 clustering인지 확인 (비지도 학습인 경우 타겟 컬럼 불필요)
+            const outgoingConnections = Array.from(connectionIndex.values())
+                .flatMap(connMap => Array.from(connMap.values()))
+                .filter(conn => conn.source === node.id)
+            
+            const hasClusteringNext = outgoingConnections.some(conn => {
+                const targetNode = nodeMap.get(conn.target)
+                return targetNode?.kind === 'clustering'
+            })
+            
+            if (hasClusteringNext) {
+                // 클러스터링용: 타겟 컬럼 없이 데이터만 분할
+                return `# 데이터 분할 (비지도 학습용)
+# 타겟 컬럼 없이 전체 데이터를 훈련/테스트로 분할
+
+from sklearn.model_selection import train_test_split
+X_train, X_test = train_test_split(
+    ${sourceVar}, test_size=${(1 - ratio).toFixed(2)}, random_state=42
+)
+
+print(f"훈련 데이터: {len(X_train)}개, 테스트 데이터: {len(X_test)}개")
+print(f"특성 수: {X_train.shape[1]}")`
+            } else {
+                // 분류/회귀용: 타겟 컬럼으로 X, y 분할
+                return `# 훈련/테스트 데이터 분할
 # 목표 변수: '${targetColumn}'
 
 X = ${sourceVar}.drop('${targetColumn}', axis=1)
@@ -269,12 +293,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # 모든 클래스 저장 (평가 시 사용)
-import numpy as np
 all_classes = np.unique(y)
 
 print(f"훈련 데이터: {len(X_train)}개, 테스트 데이터: {len(X_test)}개")
 print(f"목표 변수: '${targetColumn}'")
 print(f"클래스: {all_classes.tolist()}")`
+            }
         }
         
         case 'scaler': {
