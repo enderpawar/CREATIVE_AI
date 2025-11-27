@@ -200,7 +200,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             if (!raw) return null;
             const allowed = [
                 // ML Pipeline nodes
-                'dataLoader','preprocess','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'
+                'dataLoader','preprocess','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','clustering','evaluate','predict','hyperparamTune'
             ];
             // exact match 우선
             if (allowed.includes(raw)) return raw;
@@ -216,7 +216,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             if (!kind) return;
             const allowed = [
                 // ML Pipeline nodes
-                'dataLoader','preprocess','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','evaluate','predict','hyperparamTune'
+                'dataLoader','preprocess','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','clustering','evaluate','predict','hyperparamTune'
             ];
             if (!allowed.includes(kind)) { console.warn('드롭된 kind 무시:', kind); return; }
 
@@ -425,6 +425,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 '모델': 'model',
                 '예측결과': 'prediction',
                 '평가결과': 'metrics',
+                '클러스터레이블': 'labels',
                 
                 // 영어 소켓 (있는 그대로)
                 'data': 'data',
@@ -433,6 +434,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 'model': 'model',
                 'prediction': 'prediction',
                 'metrics': 'metrics',
+                'labels': 'labels',
                 
                 // 추가 가능한 변형들
                 '데이타': 'data',
@@ -440,7 +442,9 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 '테스트': 'test',
                 '모델링': 'model',
                 '예측': 'prediction',
-                '평가': 'metrics'
+                '평가': 'metrics',
+                '레이블': 'labels',
+                '라벨': 'labels'
             };
             
             // 소켓 이름 정규화 함수 (유연한 매칭)
@@ -718,6 +722,11 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                                 label: 'Neural Network', 
                                 kind: 'neuralNet',
                                 tip: '신경망 모델 학습 (MLP)\n입력: X_train, y_train\n출력: model'
+                            },
+                            { 
+                                label: 'Clustering', 
+                                kind: 'clustering',
+                                tip: '클러스터링 모델 학습 (K-Means, DBSCAN 등)\n입력: train\n출력: model, labels\n💡 비지도 학습: 레이블 없이 데이터를 그룹화'
                             }
                         ]
                     },

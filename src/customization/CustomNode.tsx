@@ -362,6 +362,17 @@ export function CustomNode<Scheme extends ClassicScheme>(props: Props<Scheme>) {
         if (lbl === '' || (lbl && lbl.includes('(추가 파라미터 없음)'))) lbl = undefined;
       }
     }
+    if (label === 'Clustering') {
+      if (key === 'algorithm') lbl = '알고리즘';
+      if (key === 'param1') {
+        const node = props.data as any;
+        lbl = node.param1Label || 'n_clusters: 클러스터 개수';
+      }
+      if (key === 'param2') {
+        const node = props.data as any;
+        lbl = node.param2Label || 'max_iter: 최대 반복 횟수';
+      }
+    }
     if (label === 'Feature Selection') {
       if (key === 'method') lbl = '선택 방법';
       if (key === 'k') {

@@ -70,7 +70,7 @@ function validatePipelineStructure(nodes: NodeData[], connections: ConnectionDat
         }
         
         // 모델 노드는 훈련 데이터 필요
-        if (['classifier', 'regressor', 'neuralNet', 'hyperparamTune'].includes(node.kind || '')) {
+        if (['classifier', 'regressor', 'neuralNet', 'hyperparamTune', 'clustering'].includes(node.kind || '')) {
             const hasTrain = incoming.some(c => c.targetInput === 'train')
             
             if (!hasTrain) {
@@ -177,6 +177,7 @@ function getSimpleVarName(node: NodeData, nodeIndex: Map<string, number>): strin
         'classifier': 'model',
         'regressor': 'model',
         'neuralNet': 'nn',
+        'clustering': 'cluster',
         'evaluation': 'metrics',
         'tuning': 'tuner',
         'predict': 'pred',
@@ -583,6 +584,120 @@ print("신경망 훈련 완료: 레이어 구조 [${layersStr}]")
 print(f"훈련 정확도: {${varName}.score(X_train, y_train):.4f}")`
         }
         
+        case 'clustering': {
+            const algorithm = node.controls?.algorithm?.value || node.controls?.algorithm || 'KMeans'
+            const param1 = node.controls?.param1 || 3
+            const param2 = node.controls?.param2 || 300
+            
+            // 입력 데이터 소스 확인
+            const trainConn = getConnection('train')
+            const sourceVar = trainConn ? varNameMap.get(trainConn.source) || 'X_train' : 'X_train'
+            
+            let modelCode = ''
+            let evaluationCode = ''
+            
+            switch(algorithm) {
+                case 'KMeans': {
+                    const nClusters = param1
+                    const maxIter = param2
+                    modelCode = `KMeans(n_clusters=${nClusters}, max_iter=${maxIter}, random_state=42)`
+                    evaluationCode = `print(f"클러스터 중심:\\n{${varName}.cluster_centers_}")
+print(f"관성 (Inertia): {${varName}.inertia_:.4f}")`
+                    break
+                }
+                case 'DBSCAN': {
+                    const eps = param1
+                    const minSamples = param2
+                    modelCode = `DBSCAN(eps=${eps}, min_samples=${minSamples})`
+                    evaluationCode = `n_clusters = len(set(cluster_labels)) - (1 if -1 in cluster_labels else 0)
+n_noise = list(cluster_labels).count(-1)
+print(f"발견된 클러스터 개수: {n_clusters}")
+print(f"노이즈 포인트: {n_noise}")`
+                    break
+                }
+                case 'AgglomerativeClustering': {
+                    const nClusters = param1
+                    const linkageIdx = param2
+                    const linkageOptions = ['ward', 'complete', 'average']
+                    const linkageType = linkageOptions[Math.floor(linkageIdx)] || 'ward'
+                    modelCode = `AgglomerativeClustering(n_clusters=${nClusters}, linkage='${linkageType}')`
+                    evaluationCode = `print(f"클러스터 개수: {${nClusters}}")
+print(f"연결 방식: '${linkageType}'")`
+                    break
+                }
+                case 'GaussianMixture': {
+                    const nComponents = param1
+                    const covTypeIdx = param2
+                    const covTypeOptions = ['full', 'tied', 'diag', 'spherical']
+                    const covType = covTypeOptions[Math.floor(covTypeIdx)] || 'full'
+                    modelCode = `GaussianMixture(n_components=${nComponents}, covariance_type='${covType}', random_state=42)`
+                    evaluationCode = `print(f"구성 요소 개수: {${nComponents}}")
+print(f"공분산 타입: '${covType}'")
+print(f"AIC: {${varName}.aic(${sourceVar}):.4f}")
+print(f"BIC: {${varName}.bic(${sourceVar}):.4f}")`
+                    break
+                }
+                default: {
+                    modelCode = `KMeans(n_clusters=3, random_state=42)`
+                    evaluationCode = ''
+                }
+            }
+            
+            // DBSCAN과 KMeans는 fit_predict 지원
+            const useFitPredict = ['KMeans', 'DBSCAN'].includes(algorithm)
+            const fitMethod = useFitPredict ? 'fit_predict' : 'fit'
+            
+            let code = `# 클러스터링 (${algorithm})
+${varName} = ${modelCode}
+`
+            
+            if (useFitPredict) {
+                code += `cluster_labels = ${varName}.${fitMethod}(${sourceVar})
+`
+            } else {
+                code += `${varName}.${fitMethod}(${sourceVar})
+cluster_labels = ${varName}.labels_ if hasattr(${varName}, 'labels_') else ${varName}.predict(${sourceVar})
+`
+            }
+            
+            code += `print("✅ 클러스터링 완료: ${algorithm}")
+print(f"샘플 수: {len(cluster_labels)}")
+
+# 클러스터 분포 출력
+unique_labels = np.unique(cluster_labels)
+valid_labels = unique_labels[unique_labels >= 0]
+print(f"\\n클러스터 분포:")
+for label in valid_labels:
+    count = np.sum(cluster_labels == label)
+    percentage = count / len(cluster_labels) * 100
+    print(f"  클러스터 {label}: {count}개 ({percentage:.1f}%)")
+if -1 in cluster_labels:
+    noise_count = np.sum(cluster_labels == -1)
+    noise_percentage = noise_count / len(cluster_labels) * 100
+    print(f"  노이즈: {noise_count}개 ({noise_percentage:.1f}%)")
+${evaluationCode}
+
+# 실루엣 점수 계산 (클러스터 품질 평가)
+valid_mask = cluster_labels >= 0
+valid_clusters = cluster_labels[valid_mask]
+if len(valid_mask) > 0 and np.sum(valid_mask) > 0 and len(np.unique(valid_clusters)) > 1:
+    silhouette_avg = silhouette_score(${sourceVar}[valid_mask], valid_clusters)
+    print(f"\\n실루엣 점수 (Silhouette Score): {silhouette_avg:.4f}")
+    print("  (1에 가까울수록 클러스터가 잘 분리됨)")
+    if silhouette_avg > 0.7:
+        print("  → 매우 우수한 클러스터링!")
+    elif silhouette_avg > 0.5:
+        print("  → 적절한 클러스터링")
+    elif silhouette_avg > 0.25:
+        print("  → 약한 클러스터링 구조")
+    else:
+        print("  → 클러스터 구조가 거의 없음")
+else:
+    print("\\n⚠️ 클러스터가 1개뿐이거나 유효한 샘플이 없어 실루엣 점수를 계산할 수 없습니다")`
+            
+            return code
+        }
+        
         case 'evaluate': {
             // v4.0 단순화: 'test' 소켓 이름 사용
             const testConn = getConnection('test')
@@ -798,6 +913,23 @@ function generateImports(nodes: NodeData[]): string {
             case 'neuralNet':
                 imports.add('from sklearn.neural_network import MLPClassifier')
                 break
+            case 'clustering': {
+                const clusterAlg = node.controls?.algorithm?.value || node.controls?.algorithm || 'KMeans'
+                if (clusterAlg === 'KMeans') {
+                    imports.add('from sklearn.cluster import KMeans')
+                } else if (clusterAlg === 'DBSCAN') {
+                    imports.add('from sklearn.cluster import DBSCAN')
+                } else if (clusterAlg === 'AgglomerativeClustering') {
+                    imports.add('from sklearn.cluster import AgglomerativeClustering')
+                } else if (clusterAlg === 'GaussianMixture') {
+                    imports.add('from sklearn.mixture import GaussianMixture')
+                } else {
+                    imports.add('from sklearn.cluster import KMeans, DBSCAN, AgglomerativeClustering')
+                    imports.add('from sklearn.mixture import GaussianMixture')
+                }
+                imports.add('from sklearn.metrics import silhouette_score')
+                break
+            }
             case 'evaluate':
                 imports.add('from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, f1_score, mean_squared_error, r2_score, mean_absolute_error')
                 break
@@ -833,7 +965,7 @@ export function generatePythonCode(graph: GraphData, logicId?: string): string {
     // ML 노드만 필터링
     const mlNodes = graph.nodes.filter(n => 
         ['dataLoader', 'preprocess', 'dataSplit', 'scaler', 'featureSelection', 
-         'classifier', 'regressor', 'neuralNet', 'evaluate', 
+         'classifier', 'regressor', 'neuralNet', 'clustering', 'evaluate', 
          'predict', 'hyperparamTune'].includes(n.kind)
     )
     

@@ -128,20 +128,36 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
    - settings: { method: "GridSearchCV" | "RandomizedSearchCV" | "BayesSearchCV", cv: 5, n_iter: 10 }
    - 💡 최적의 설정값을 찾아 모델을 학습시킵니다
 
-10. **predict** - "Predict (예측)"
+10. **clustering** - "Clustering (클러스터링)"
+   - 입력: **train** (정확한 이름: "train")
+   - 출력: **model**, **labels** (정확한 이름: "model", "labels")
+   - settings: { 
+       algorithm: "KMeans" | "DBSCAN" | "AgglomerativeClustering" | "GaussianMixture",
+       param1: 3,    // KMeans: n_clusters, DBSCAN: eps, Hierarchical: n_clusters, GMM: n_components
+       param2: 300   // KMeans: max_iter, DBSCAN: min_samples, Hierarchical: linkage(0-2), GMM: covariance_type(0-3)
+     }
+   - 💡 비지도 학습으로 데이터를 여러 그룹으로 자동 분류합니다
+   - ⚠️ 레이블이 없는 데이터에 사용 (targetColumn 불필요)
+   - 알고리즘별 파라미터:
+     * KMeans: param1=클러스터 개수, param2=최대 반복 횟수
+     * DBSCAN: param1=eps(이웃 거리, 0.1~2.0), param2=min_samples(최소 샘플 수)
+     * AgglomerativeClustering: param1=클러스터 개수, param2=linkage(0=ward, 1=complete, 2=average)
+     * GaussianMixture: param1=구성 요소 개수, param2=covariance_type(0=full, 1=tied, 2=diag, 3=spherical)
+
+11. **predict** - "Predict (예측)"
    - 입력: **model**, **test** (정확한 이름: "model", "test")
    - 출력: **prediction** (정확한 이름: "prediction")
    - settings: {}
    - 💡 학습된 모델로 테스트 데이터에 대한 예측을 수행합니다
 
-11. **evaluate** - "Evaluate (모델 평가)"
+12. **evaluate** - "Evaluate (모델 평가)"
    - 입력: **prediction**, **test** (정확한 이름: "prediction", "test")
    - 출력: **metrics** (정확한 이름: "metrics")
    - settings: {}
    - 💡 예측 결과의 정확도를 측정합니다
 
 **⚠️ 소켓 연결 규칙 (매우 중요!)**:
-- 모든 소켓 이름은 **정확한 영문 이름**을 사용하세요: data, train, test, model, prediction, metrics
+- 모든 소켓 이름은 **정확한 영문 이름**을 사용하세요: data, train, test, model, prediction, metrics, labels
 - 한글 이름(데이터, 훈련용 등)은 사용하지 마세요
 - 예시: { "step": 2, "output": "data", "input": "data" } ✅
 - 잘못된 예시: { "step": 2, "output": "데이터", "input": "데이터" } ❌

@@ -36,6 +36,7 @@ export type NodeKind =
     | 'classifier'
     | 'regressor'
     | 'neuralNet'
+    | 'clustering'
     | 'evaluate'
     | 'predict'
     | 'hyperparamTune'
@@ -496,6 +497,87 @@ export class NeuralNetNode extends TradeNode {
         this._controlHints = {
             layers: { label: '히든 레이어 구조', title: '각 레이어의 뉴런 개수 (쉼표로 구분, 예: 64,32)' },
             epochs: { label: '에포크 (학습 반복 횟수)', title: '학습 반복 횟수' }
+        }
+    }
+}
+
+export class ClusteringNode extends TradeNode {
+    public param1Label: string = ''
+    public param2Label: string = ''
+    
+    constructor() {
+        super('Clustering')
+        this.addInput('train', new ClassicPreset.Input(numberSocket, '훈련용'))
+        this.addOutput('model', new ClassicPreset.Output(numberSocket, '모델'))
+        this.addOutput('labels', new ClassicPreset.Output(numberSocket, '클러스터레이블'))
+        
+        // 클러스터링 알고리즘 드롭다운
+        const algorithmOptions = [
+            { value: 'KMeans', label: 'K-Means (K-평균)' },
+            { value: 'DBSCAN', label: 'DBSCAN (밀도 기반)' },
+            { value: 'AgglomerativeClustering', label: 'Hierarchical (계층적)' },
+            { value: 'GaussianMixture', label: 'GMM (가우시안 혼합)' }
+        ]
+        
+        const algorithmControl = new SelectControl(algorithmOptions, 'KMeans', (value) => {
+            this.updateParametersForAlgorithm(value)
+            if (currentArea) {
+                try {
+                    currentArea.update('node', this.id)
+                } catch (e) {
+                    console.error('Failed to update area:', e)
+                }
+            }
+        })
+        
+        this.addControl('algorithm', algorithmControl)
+        this.addControl('param1', new ClassicPreset.InputControl('number', { 
+            initial: 3,
+            step: 1,
+            min: 2
+        } as any))
+        this.addControl('param2', new ClassicPreset.InputControl('number', { 
+            initial: 300,
+            step: 10,
+            min: 10
+        } as any))
+        
+        // 초기 알고리즘에 맞게 파라미터 라벨 설정
+        this.updateParametersForAlgorithm('KMeans')
+        
+        this.kind = 'clustering'
+        this.category = 'ml-model'
+    }
+    
+    updateParametersForAlgorithm(algorithm: string) {
+        const param1 = this.controls['param1'] as ClassicPreset.InputControl<'number'>
+        const param2 = this.controls['param2'] as ClassicPreset.InputControl<'number'>
+        
+        switch(algorithm) {
+            case 'KMeans':
+                this.param1Label = 'n_clusters: 클러스터 개수'
+                this.param2Label = 'max_iter: 최대 반복 횟수'
+                if (param1) param1.value = 3
+                if (param2) param2.value = 300
+                break
+            case 'DBSCAN':
+                this.param1Label = 'eps: 이웃 거리 (0.1 ~ 2.0)'
+                this.param2Label = 'min_samples: 최소 샘플 수'
+                if (param1) param1.value = 0.5
+                if (param2) param2.value = 5
+                break
+            case 'AgglomerativeClustering':
+                this.param1Label = 'n_clusters: 클러스터 개수'
+                this.param2Label = 'linkage: 연결 방식 (0=ward, 1=complete, 2=average)'
+                if (param1) param1.value = 3
+                if (param2) param2.value = 0
+                break
+            case 'GaussianMixture':
+                this.param1Label = 'n_components: 구성 요소 개수'
+                this.param2Label = 'covariance_type: 공분산 타입 (0=full, 1=tied, 2=diag, 3=spherical)'
+                if (param1) param1.value = 3
+                if (param2) param2.value = 0
+                break
         }
     }
 }
@@ -1328,6 +1410,8 @@ export function createNodeByKind(kind: NodeKind): TradeNode {
             return new RegressorNode()
         case 'neuralNet':
             return new NeuralNetNode()
+        case 'clustering':
+            return new ClusteringNode()
         case 'evaluate':
             return new EvaluateNode()
         case 'predict':
@@ -1392,6 +1476,9 @@ const labelToKind = (label: string): NodeKind | undefined => {
         case 'Neural Network':
         case 'NeuralNet':
             return 'neuralNet'
+        case '클러스터링':
+        case 'Clustering':
+            return 'clustering'
         case '평가':
         case 'Evaluate':
             return 'evaluate'
