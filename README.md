@@ -1,6 +1,6 @@
 # [CREATIVE_AI](https://enderpawar.github.io/CREATIVE_AI/)
 
-머신러닝 파이프라인을 시각적으로 설계하고 Python 코드로 자동 변환하는 노드 기반 에디터입니다. [배포 링크](https://enderpawar.github.io/CREATIVE_AI/)
+복잡한 코드 설계 없이 머신러닝 파이프라인을 시각적으로 설계하고 Python 코드로 자동 변환할 수 있는 노드 기반 에디터입니다. [배포 링크](https://enderpawar.github.io/CREATIVE_AI/)
 
 ![Animation](https://github.com/user-attachments/assets/68fcc332-ec0b-4e4e-8048-f018ed11d5d2)
 
@@ -8,7 +8,7 @@
 - 작성한 로직 리스트를 보여주는 페이지입니다.
 <img width="2560" height="1345" alt="image" src="https://github.com/user-attachments/assets/eae47ea8-4928-4904-a572-b05de7caca26" />
 <details> 
-  <summary>LogicListPage 세부 기능 소개</summary>
+  <summary>LogicListPage 세부 기능 소개(클릭)</summary>
 
 1. 다크모드/ 라이트모드 토글 기능 
 ![LogicListPage](https://github.com/user-attachments/assets/462ad6c9-1781-4274-b160-01abc0f4b70b)
@@ -23,22 +23,22 @@
 - 파이프라인 로직을 편집할 수 있는 페이지입니다.
 <img width="2560" height="1347" alt="image" src="https://github.com/user-attachments/assets/a54b0bb8-f359-4de5-a02a-0f2f4ae8dbd9" />
 <details>
-  <summary>LogicEditorPage 세부 기능 소개</summary>
+  <summary>LogicEditorPage 세부 기능 소개(클릭)</summary>
   
-1. 좌측 사이드바에서 노드를 끌어와 캔버스에 배치하기 
+1. 비주얼 노드 시각화 
 ![LogicEditorPage-node create](https://github.com/user-attachments/assets/7e7f9e9f-2fe8-4598-babc-2247f849d72b)
 ![LogicEditorPage2](https://github.com/user-attachments/assets/d8ff0d92-614f-4278-94f6-11c1c0e0f930)
-- AI 학습 코드를 생성하기 위해 복잡한 코드 설계가 필요 없이 비주얼 노드를 이용하여 보다 직관적으로 코드를 설계할 수 있습니다. 
+- 좌측 사이드바에서 노드를 끌어와 배치하여 코드를 완성해보세요. AI 학습 코드를 생성하기 위해 복잡한 코드 설계가 필요 없이 비주얼 노드를 이용하여 보다 직관적으로 코드를 설계할 수 있습니다. 
   
 2. shift+좌클릭으로 캔버스 영역 내 노드 중복 선택 & 삭제/복사/잘라내기/붙여넣기 메뉴 홀더
 ![LogicEditorPage-drag modal](https://github.com/user-attachments/assets/2324d725-92af-4e72-ba18-9246996b6ac8)
 - 편리한 드래그 홀더 기능을 통해 쉽게 파이프라인 캔버스를 편집할 수 있습니다.
 
-3. Gemini API로 노드 배치 가이드 
+3. Gemini API 노드 배치 가이드 
 ![LogicEditorPage-nodeguide](https://github.com/user-attachments/assets/7b8f8b36-2e0f-4e77-9aa7-adddd9d7f116)
 - 파이썬 코드에 대한 지식이 전무한 초보자도 gemini api가 제공하는 노드별 기능 설명 및 input output 배치 가이드를 통해 파이프라인 설계를 보다 쉽게 학습할 수 있습니다
 
-4. 노드 자동 배치  
+4. AI 생성기반 노드 자동 배치  
 ![LogicEditorPage-canvas auto set](https://github.com/user-attachments/assets/93bcda2e-ae76-4a72-ba1f-16fbddd30398)
 - 복잡하게 노드를 일일히 배치할 필요없이 Gemini가 작성한 노드 배치 가이드를 토대로 캔버스에 노드를 자동배치할 수 있습니다.
 
