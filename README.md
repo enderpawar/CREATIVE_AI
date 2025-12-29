@@ -1,6 +1,6 @@
 <div align="center">
 
-# CREATIVE AI
+# [CREATIVE AI](https://enderpawar.github.io/CREATIVE_AI/)
 
 ### 코드 한 줄 작성 없이 머신러닝 파이프라인을 시각적으로 설계하세요
 
