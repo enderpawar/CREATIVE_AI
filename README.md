@@ -4,6 +4,10 @@
 
 ### 코드 한 줄 작성 없이 머신러닝 파이프라인을 시각적으로 설계하세요
 
+
+
+![Animation](https://github.com/user-attachments/assets/68fcc332-ec0b-4e4e-8048-f018ed11d5d2)
+
 [![Live Demo](https://img.shields.io/badge/Live_Demo-4285F4?style=for-the-badge)](https://enderpawar.github.io/CREATIVE_AI/)
 [![MIT License](https://img.shields.io/badge/License-MIT-green.svg?style=for-the-badge)](LICENSE)
 [![React](https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
@@ -12,9 +16,6 @@
 **드래그 & 드롭 만으로 머신러닝 파이프라인을 구축하고, 실행 가능한 Python 코드로 자동 변환하세요.**
 
 [시작하기](#빠른-시작) • [데모 영상](#데모-영상) • [주요 기능](#주요-기능) • [사용 가이드](#사용-가이드)
-
-![Animation](https://github.com/user-attachments/assets/68fcc332-ec0b-4e4e-8048-f018ed11d5d2)
-
 </div>
 
 ---
