@@ -16,7 +16,7 @@ export const useUndoRedo = <T>(initialState: T, maxHistorySize = 50) => {
 
   // 새로운 상태를 히스토리에 추가
   const setStateWithHistory = useCallback((newState: T | ((prev: T) => T)) => {
-    setState((prev: T) => {
+    setState((prev) => {
       const nextState = typeof newState === 'function' ? newState(prev) : newState;
       
       // 현재 위치 이후의 히스토리는 제거
@@ -58,9 +58,10 @@ export const useUndoRedo = <T>(initialState: T, maxHistorySize = 50) => {
   }, [historyIndex]);
 
   // 히스토리 초기화
-  const reset = useCallback((newInitialState: T = initialState) => {
-    setState(newInitialState);
-    history.current = [newInitialState];
+  const reset = useCallback((newInitialState?: T) => {
+    const stateToUse = newInitialState !== undefined ? newInitialState : initialState;
+    setState(stateToUse);
+    history.current = [stateToUse];
     setHistoryIndex(0);
   }, [initialState]);
 
@@ -99,8 +100,12 @@ export const useKeyboardShortcuts = (shortcuts: Record<string, (e: KeyboardEvent
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // input, textarea에서는 단축키 비활성화
-    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
-      return;
+    const target = e.target;
+    if (target && target instanceof HTMLElement) {
+      const tagName = target.tagName;
+      if (tagName === 'INPUT' || tagName === 'TEXTAREA') {
+        return;
+      }
     }
 
     const key = e.key.toLowerCase();
