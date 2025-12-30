@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import LandingPage from './components/LandingPage';
 import LogicListPage from './components/LogicListPage';
 import LogicEditorPage from './components/LogicEditorPage';
+import KeyboardShortcuts from './components/KeyboardShortcuts';
 import {
   listLogics,
   createLogic,
@@ -161,6 +162,7 @@ const App = () => {
           theme={theme}
         />
       )}
+      <KeyboardShortcuts />
     </div>
   );
 };
