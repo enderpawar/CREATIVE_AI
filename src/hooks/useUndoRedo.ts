@@ -17,7 +17,9 @@ export const useUndoRedo = <T>(initialState: T, maxHistorySize = 50) => {
   // 새로운 상태를 히스토리에 추가
   const setStateWithHistory = useCallback((newState: T | ((prev: T) => T)) => {
     setState((prev) => {
-      const nextState = typeof newState === 'function' ? newState(prev) : newState;
+      const nextState = typeof newState === 'function' && !(newState instanceof Object && 'then' in newState)
+        ? (newState as (prev: T) => T)(prev) 
+        : newState as T;
       
       // 현재 위치 이후의 히스토리는 제거
       const newHistory = history.current.slice(0, historyIndex + 1);
