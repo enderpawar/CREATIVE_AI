@@ -9,14 +9,14 @@
  */
 import { useState, useCallback, useRef } from 'react';
 
-export const useUndoRedo = (initialState, maxHistorySize = 50) => {
+export const useUndoRedo = <T>(initialState: T, maxHistorySize = 50) => {
   const [state, setState] = useState(initialState);
   const [historyIndex, setHistoryIndex] = useState(0);
   const history = useRef([initialState]);
 
   // 새로운 상태를 히스토리에 추가
-  const setStateWithHistory = useCallback((newState) => {
-    setState(prev => {
+  const setStateWithHistory = useCallback((newState: T | ((prev: T) => T)) => {
+    setState((prev: T) => {
       const nextState = typeof newState === 'function' ? newState(prev) : newState;
       
       // 현재 위치 이후의 히스토리는 제거
@@ -58,7 +58,7 @@ export const useUndoRedo = (initialState, maxHistorySize = 50) => {
   }, [historyIndex]);
 
   // 히스토리 초기화
-  const reset = useCallback((newInitialState = initialState) => {
+  const reset = useCallback((newInitialState: T = initialState) => {
     setState(newInitialState);
     history.current = [newInitialState];
     setHistoryIndex(0);
@@ -93,11 +93,11 @@ export const useUndoRedo = (initialState, maxHistorySize = 50) => {
  *   'ctrl+s': handleSave,
  * });
  */
-export const useKeyboardShortcuts = (shortcuts) => {
+export const useKeyboardShortcuts = (shortcuts: Record<string, (e: KeyboardEvent) => void>) => {
   const shortcutsRef = useRef(shortcuts);
   shortcutsRef.current = shortcuts;
 
-  const handleKeyDown = useCallback((e) => {
+  const handleKeyDown = useCallback((e: KeyboardEvent) => {
     // input, textarea에서는 단축키 비활성화
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
       return;
