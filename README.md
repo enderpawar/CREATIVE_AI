@@ -384,7 +384,7 @@ npm run preview
 </details>
 
 <details>
-<summary><b>v2.0 - AI 자동 생성 혁명</b></summary>
+<summary><b>v2.0 - AI 자동 생성</b></summary>
 
 ### 주요 기능
 - **Gemini AI 통합**: Google의 최신 생성형 AI 엔진
