@@ -1,8 +1,7 @@
 // Gemini API를 사용하여 Python 코드 생성
 
 import { getApiKey, hasApiKey } from './apiKeyManager';
-import { handleError, retryWithBackoff } from './errorHandler';
-import { logger } from './logger';
+import { handleError } from './errorHandler';
 
 export interface NodeGuide {
     step: number;
