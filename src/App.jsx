@@ -11,6 +11,7 @@ import {
   saveTheme as saveThemeToStorage,
   loadTheme as loadThemeFromStorage,
 } from './utils/logicStorage';
+import { logger } from './utils/logger';
 
 // ----------------------------------------------------------------
 // App: 페이지 라우팅을 담당하는 메인 컴포넌트
@@ -41,7 +42,7 @@ const App = () => {
       const index = listLogics();
       setLogics(index || []);
     } catch (e) {
-      console.error('로직 목록 로딩 실패:', e);
+      logger.error('로직 목록 로딩 실패:', e);
       setLogics([]);
     }
   }, []);
@@ -82,7 +83,7 @@ const App = () => {
         )
       );
     } catch (e) {
-      console.error('로직 저장 실패:', e);
+      logger.error('로직 저장 실패:', e);
     }
   };
 
@@ -92,9 +93,8 @@ const App = () => {
       setLogics((prev)=> prev.filter((l)=> l.id !== logicIdToDelete));
       deleteLogic(logicIdToDelete);
     } catch (e) {
-      console.error('로직 삭제 실패:', e);
+      logger.error('로직 삭제 실패:', e);
     }
-    console.log('로직이 삭제되었습니다.');
   };
 
   return (
@@ -138,7 +138,7 @@ const App = () => {
               const ids = items.map((i)=> i.id);
               reorderLogics(ids);
             } catch (e) {
-              console.error('로직 순서 변경 실패:', e);
+              logger.error('로직 순서 변경 실패:', e);
             }
           }}
           onCreateLogic={async (name)=>{
@@ -149,7 +149,7 @@ const App = () => {
                 setLogics((prev)=> [...prev, meta]);
               }
             } catch (e) {
-              console.error('로직 생성 실패:', e);
+              logger.error('로직 생성 실패:', e);
             }
           }}
         />

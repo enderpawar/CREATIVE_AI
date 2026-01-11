@@ -1,6 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { loadCSVFile, saveCSVData, listStoredCSVFiles, deleteStoredCSV, validateCSV, loadStoredCSV } from '../utils/csvHandler';
 import { useToast } from './toast/ToastProvider';
+import { getThemeColors } from '../utils/themeColors';
+import { logger } from '../utils/logger';
 
 const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
     const toast = useToast();
@@ -17,41 +19,8 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
         }
     }, [logicId]);
 
-    // 테마에 따른 색상 정의
-    const colors = {
-        dark: {
-            bg: 'bg-neutral-900/60',
-            border: 'border-neutral-800/70',
-            title: 'text-gray-200',
-            text: 'text-gray-300',
-            muted: 'text-gray-400',
-            mutedLight: 'text-gray-500',
-            sectionBg: 'bg-neutral-950',
-            sectionBorder: 'border-neutral-800',
-            itemBorder: 'border-neutral-700',
-            itemBg: 'bg-neutral-800',
-            itemHoverText: 'hover:text-white',
-            selectedBorder: 'border-cyan-500',
-            selectedBg: 'bg-cyan-950/30'
-        },
-        light: {
-            bg: 'bg-white/80',
-            border: 'border-gray-300',
-            title: 'text-gray-800',
-            text: 'text-gray-700',
-            muted: 'text-gray-600',
-            mutedLight: 'text-gray-500',
-            sectionBg: 'bg-gray-50',
-            sectionBorder: 'border-gray-200',
-            itemBorder: 'border-gray-300',
-            itemBg: 'bg-gray-100',
-            itemHoverText: 'hover:text-gray-900',
-            selectedBorder: 'border-cyan-600',
-            selectedBg: 'bg-cyan-50'
-        }
-    };
-
-    const c = colors[theme] || colors.dark;
+    // 테마 색상 가져오기
+    const c = getThemeColors(theme);
 
     const handleFileUpload = useCallback(async (e) => {
         const file = e.target.files?.[0];
@@ -97,7 +66,7 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
                 onSelectFile(csvData.fileName);
             }
         } catch (error) {
-            console.error('CSV 업로드 오류:', error);
+            logger.error('CSV 업로드 오류:', error);
             toast.error('CSV 파일 업로드 실패');
         }
     }, [toast, onSelectFile]);
@@ -168,7 +137,7 @@ const CSVDataManager = ({ onSelectFile, theme = 'dark', logicId }) => {
                 
                 toast.success(`${fileName} 선택됨 (${rows.length}행 × ${columns}열)`);
             } catch (error) {
-                console.error('미리보기 생성 오류:', error);
+                logger.error('미리보기 생성 오류:', error);
                 toast.error('파일 미리보기 생성 실패');
                 setPreview(null);
             }

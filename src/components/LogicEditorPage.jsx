@@ -6,6 +6,8 @@ import { ClassicPreset } from 'rete';
 import { loadLogic as loadLogicFromStorage } from '../utils/logicStorage';
 import { generatePythonCode, generateJupyterNotebook, generatePythonScript } from '../utils/pipelineToCode';
 import { enhanceCodeWithAI } from '../utils/geminiPipeline';
+import { logger } from '../utils/logger';
+import { saveApiKey, hasApiKey, getApiKey, removeApiKey } from '../utils/apiKeyManager';
 import CSVDataManager from './CSVDataManager.jsx';
 import GeminiPipelineGenerator from './GeminiPipelineGenerator.jsx';
 
@@ -48,7 +50,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
 
     // API 키 불러오기
     useEffect(() => {
-        const savedApiKey = localStorage.getItem('gemini_api_key');
+        const savedApiKey = getApiKey();
         if (savedApiKey) {
             setApiKeyInput(savedApiKey);
         }
@@ -153,7 +155,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                     return;
                 }
             } catch (e) {
-                console.error('로직 로드 실패:', e);
+                logger.error('로직 로드 실패:', e);
             }
         } else {
             setLogic(null);
@@ -182,7 +184,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                     }
                 }
             } catch (e) {
-                console.warn('그래프 로드 중 오류:', e);
+                logger.warn('그래프 로드 중 오류:', e);
             }
         })();
     }, [logic, selectedLogicId, ready, editorRef, areaRef]);
@@ -218,7 +220,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 // ML Pipeline nodes
                 'dataLoader','preprocess','dataSplit','scaler','featureSelection','classifier','regressor','neuralNet','clustering','evaluate','predict','hyperparamTune'
             ];
-            if (!allowed.includes(kind)) { console.warn('드롭된 kind 무시:', kind); return; }
+            if (!allowed.includes(kind)) { logger.warn('드롭된 kind 무시:', kind); return; }
 
             const editor = editorRef.current;
             const area = areaRef.current;
@@ -323,7 +325,7 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 toast.error('다운로드할 CSV 파일이 없습니다.');
             }
         } catch (error) {
-            console.error('CSV 다운로드 오류:', error);
+            logger.error('CSV 다운로드 오류:', error);
             toast.error('CSV 파일 다운로드 중 오류가 발생했습니다.');
         }
     }, [editorRef, areaRef, toast]);
@@ -399,13 +401,13 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 return;
             }
 
-            console.log('📥 Received pipeline:', pipeline);
+            logger.debug('파이프라인 수신:', pipeline);
 
             // ✅ 파이프라인 검증
             const validationErrors = validatePipeline(pipeline);
             if (validationErrors.length > 0) {
                 toast.error(`파이프라인 검증 실패: ${validationErrors[0]}`);
-                console.error('모든 검증 오류:', validationErrors);
+                logger.error('모든 검증 오류:', validationErrors);
                 return;
             }
 
@@ -477,24 +479,24 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
             };
 
             // 1. 모든 노드 생성
-            console.log('🔨 Creating nodes...');
+            logger.debug('노드 생성 시작...');
             for (let i = 0; i < pipeline.nodes.length; i++) {
                 const nodeData = pipeline.nodes[i];
                 // nodeType 또는 type 속성 모두 지원
                 const nodeType = nodeData.nodeType || nodeData.type || nodeData.kind;
-                console.log(`Creating node: ${nodeType}`, nodeData);
+                logger.debug(`노드 생성: ${nodeType}`, nodeData);
                 
                 const node = createNodeByKind(nodeType);
                 
                 if (!node) {
-                    console.error(`❌ 노드 타입을 찾을 수 없습니다: ${nodeType}`);
+                    logger.error(`노드 타입을 찾을 수 없습니다: ${nodeType}`);
                     continue;
                 }
 
                 // 컨트롤 값 설정
                 if (nodeData.controls || nodeData.settings) {
                     const settings = nodeData.controls || nodeData.settings;
-                    console.log(`⚙️ Setting controls for ${nodeType}:`, settings);
+                    logger.debug(`${nodeType} 컨트롤 설정:`, settings);
                     
                     for (const [key, value] of Object.entries(settings)) {
                         const control = node.controls[key];
@@ -504,9 +506,9 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                             } else if ('value' in control) {
                                 control.value = value;
                             }
-                            console.log(`  ✓ ${key} = ${value}`);
+                            logger.debug(`  ${key} = ${value}`);
                         } else {
-                            console.warn(`  ⚠️ Control not found: ${key}`);
+                            logger.warn(`  컨트롤을 찾을 수 없음: ${key}`);
                         }
                     }
                 }
@@ -525,14 +527,12 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 const originalId = nodeData.id || `node-${nodeData.step}`;
                 nodeMap.set(originalId, node);
                 
-                console.log(`✅ Node created: ${node.label} (ID: ${node.id})`);
-                console.log(`  Inputs:`, Object.keys(node.inputs || {}));
-                console.log(`  Outputs:`, Object.keys(node.outputs || {}));
+                logger.debug(`노드 생성 완료: ${node.label} (ID: ${node.id})`);
             }
 
             // 2. 연결 생성
             const connections = Array.isArray(pipeline.connections) ? pipeline.connections : [];
-            console.log(`🔗 Creating ${connections.length} connections...`);
+            logger.debug(`${connections.length}개의 연결 생성 중...`);
             
             // 중복 연결 체크용
             const existingConnections = new Set();
@@ -542,39 +542,32 @@ const LogicEditorPage = ({ selectedLogicId, onBack, onSave, defaultNewLogicName 
                 const targetNode = nodeMap.get(conn.target);
                 
                 if (!sourceNode || !targetNode) {
-                    console.error(`❌ 노드를 찾을 수 없습니다: ${conn.source} -> ${conn.target}`);
-                    console.log('Available nodes:', Array.from(nodeMap.keys()));
+                    logger.error(`노드를 찾을 수 없습니다: ${conn.source} -> ${conn.target}`);
+                    logger.debug('사용 가능한 노드:', Array.from(nodeMap.keys()));
                     continue;
                 }
                 
-                console.log(`\n🔗 Connecting: ${sourceNode.label} -> ${targetNode.label}`);
-                console.log(`  Source output: "${conn.sourceOutput}"`);
-                console.log(`  Target input: "${conn.targetInput}"`);
+                logger.debug(`연결 중: ${sourceNode.label} -> ${targetNode.label}`);
                 
                 // 사용 가능한 소켓 목록
                 const availableOutputs = Object.keys(sourceNode.outputs || {});
                 const availableInputs = Object.keys(targetNode.inputs || {});
-                
-                console.log(`  Available outputs:`, availableOutputs);
-                console.log(`  Available inputs:`, availableInputs);
                 
                 // 소켓 이름 정규화
                 const outputKey = normalizeSocketName(conn.sourceOutput, availableOutputs);
                 const inputKey = normalizeSocketName(conn.targetInput, availableInputs);
                 
                 if (!outputKey) {
-                    console.error(`❌ 출력 소켓을 찾을 수 없습니다: "${conn.sourceOutput}"`);
-                    console.log(`  Tried to match with:`, availableOutputs);
+                    logger.error(`출력 소켓을 찾을 수 없습니다: "${conn.sourceOutput}"`);
                     continue;
                 }
                 
                 if (!inputKey) {
-                    console.error(`❌ 입력 소켓을 찾을 수 없습니다: "${conn.targetInput}"`);
-                    console.log(`  Tried to match with:`, availableInputs);
+                    logger.error(`입력 소켓을 찾을 수 없습니다: "${conn.targetInput}"`);
                     continue;
                 }
                 
-                console.log(`  ✓ Matched: ${outputKey} -> ${inputKey}`);
+                logger.debug(`소켓 매칭: ${outputKey} -> ${inputKey}`);
                 
                 // 중복 연결 체크
                 const connKey = `${sourceNode.id}:${outputKey}->${targetNode.id}:${inputKey}`;
@@ -1053,9 +1046,13 @@ ${userIntent}
                         <button
                             onClick={() => {
                                 if (apiKeyInput.trim()) {
-                                    localStorage.setItem('gemini_api_key', apiKeyInput.trim());
-                                    toast.success('API 키가 저장되었습니다!');
-                                    setShowApiKeyModal(false);
+                                    try {
+                                        saveApiKey(apiKeyInput.trim());
+                                        toast.success('API 키가 저장되었습니다!');
+                                        setShowApiKeyModal(false);
+                                    } catch (error) {
+                                        toast.error(error.message || 'API 키 저장에 실패했습니다.');
+                                    }
                                 } else {
                                     toast.error('API 키를 입력해주세요.');
                                 }
@@ -1066,9 +1063,13 @@ ${userIntent}
                         </button>
                         <button
                             onClick={() => {
-                                localStorage.removeItem('gemini_api_key');
-                                setApiKeyInput('');
-                                toast.info('API 키가 삭제되었습니다.');
+                                try {
+                                    removeApiKey();
+                                    setApiKeyInput('');
+                                    toast.info('API 키가 삭제되었습니다.');
+                                } catch (error) {
+                                    logger.error('API 키 삭제 실패:', error);
+                                }
                             }}
                             className="flex-1 px-4 py-2 text-base font-semibold text-white bg-red-600 rounded-lg hover:bg-red-700 shadow-sm"
                         >

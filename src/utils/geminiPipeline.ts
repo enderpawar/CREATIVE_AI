@@ -1,12 +1,8 @@
 // Gemini API를 사용하여 Python 코드 생성
 
-/**
- * localStorage에서 사용자가 입력한 API 키를 가져옵니다.
- * 사용자는 UI에서 직접 Gemini API 키를 설정해야 합니다.
- */
-const getApiKey = (): string | null => {
-    return localStorage.getItem('gemini_api_key') || null;
-};
+import { getApiKey, hasApiKey } from './apiKeyManager';
+import { handleError, retryWithBackoff } from './errorHandler';
+import { logger } from './logger';
 
 export interface NodeGuide {
     step: number;
@@ -30,9 +26,11 @@ export interface CodeGenerationResult {
  * Gemini API를 사용하여 사용자 프롬프트로부터 Python 코드와 노드 배치 가이드를 생성합니다.
  */
 export async function generatePythonCode(userPrompt: string): Promise<CodeGenerationResult> {
-    const apiKey = getApiKey();
-    if (!apiKey) throw new Error('API 키가 설정되지 않았습니다.');
+    if (!hasApiKey()) {
+        throw new Error('API 키가 설정되지 않았습니다.');
+    }
 
+    const apiKey = getApiKey();
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
     
     const systemPrompt = `당신은 머신러닝 전문가입니다. 사용자의 요구사항에 맞는 scikit-learn 기반 Python 코드를 생성하고, **초보자를 위한** 노드 기반 에디터에서 구현하기 위한 **상세한 가이드**를 제공해주세요.
@@ -340,8 +338,8 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
         
         return result;
     } catch (error) {
-        console.error('Gemini API 오류:', error);
-        throw new Error(`코드 생성 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+        const errorMessage = handleError(error, 'Gemini API - generatePythonCode');
+        throw new Error(errorMessage);
     }
 }
 
@@ -354,9 +352,11 @@ export async function generatePythonCode(userPrompt: string): Promise<CodeGenera
  * @returns AI가 개선한 완전한 Python 코드
  */
 export async function enhanceCodeWithAI(generatedCode: string, userIntent: string): Promise<string> {
-    const apiKey = getApiKey();
-    if (!apiKey) throw new Error('API 키가 설정되지 않았습니다.');
+    if (!hasApiKey()) {
+        throw new Error('API 키가 설정되지 않았습니다.');
+    }
 
+    const apiKey = getApiKey();
     const API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
     
     const systemPrompt = `당신은 Python 머신러닝 코드 리팩토링 전문가입니다. 
@@ -461,7 +461,7 @@ ${userIntent}
         
         return text;
     } catch (error) {
-        console.error('AI 코드 개선 오류:', error);
-        throw new Error(`코드 개선 실패: ${error instanceof Error ? error.message : '알 수 없는 오류'}`);
+        const errorMessage = handleError(error, 'Gemini API - enhanceCodeWithAI');
+        throw new Error(errorMessage);
     }
 }

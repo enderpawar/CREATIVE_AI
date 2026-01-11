@@ -1,5 +1,7 @@
 // localStorage를 사용한 로직 저장소 관리
 
+import { logger } from './logger';
+
 const STORAGE_KEYS = {
   LOGIC_INDEX: 'trade-builder-logic-index',
   LOGIC_PREFIX: 'trade-builder-logic-',
@@ -32,7 +34,7 @@ export function listLogics(): LogicMeta[] {
     const parsed = JSON.parse(index);
     return Array.isArray(parsed) ? parsed : [];
   } catch (e) {
-    console.error('Failed to list logics:', e);
+    logger.error('Failed to list logics:', e);
     return [];
   }
 }
@@ -42,7 +44,7 @@ function saveIndex(logics: LogicMeta[]): void {
   try {
     localStorage.setItem(STORAGE_KEYS.LOGIC_INDEX, JSON.stringify(logics));
   } catch (e) {
-    console.error('Failed to save index:', e);
+    logger.error('Failed to save index:', e);
   }
 }
 
@@ -78,7 +80,7 @@ export function loadLogic(id: string): Logic | null {
     if (!data) return null;
     return JSON.parse(data);
   } catch (e) {
-    console.error('Failed to load logic:', e);
+    logger.error('Failed to load logic:', e);
     return null;
   }
 }

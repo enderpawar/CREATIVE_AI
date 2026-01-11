@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { generatePythonCode } from '../utils/geminiPipeline';
 import { listStoredCSVFiles, getCSVColumns } from '../utils/csvHandler';
 import { useToast } from './toast/ToastProvider.jsx';
+import { logger } from '../utils/logger';
 import geminiIcon from '../assets/gemini-color.png';
 
 /**
@@ -63,7 +64,7 @@ const GeminiPipelineGenerator = ({ onApplyPipeline, logicId }) => {
             setNodeGuide(result.nodeGuide || []);
             toast.success('코드가 생성되었습니다!');
         } catch (error) {
-            console.error('코드 생성 오류:', error);
+            logger.error('코드 생성 오류:', error);
             toast.error(error.message || '코드 생성에 실패했습니다.');
         } finally {
             setIsGenerating(false);
@@ -193,7 +194,7 @@ const GeminiPipelineGenerator = ({ onApplyPipeline, logicId }) => {
                                     }
                                 });
 
-                                console.log('Generated pipeline:', pipeline);
+                                logger.debug('Generated pipeline:', pipeline);
                                 onApplyPipeline(pipeline);
                             }}
                             style={{
