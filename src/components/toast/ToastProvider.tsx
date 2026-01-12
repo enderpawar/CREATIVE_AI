@@ -108,13 +108,13 @@ function ToastItem({ toast, onClose }: ToastItemProps): React.JSX.Element {
       <div className="flex items-start gap-3">
         <div className="text-lg opacity-80">{iconByVariant(variant)}</div>
         <div className="flex-1">
-          {title ? <div className="font-semibold mb-0.5" style={{color:'var(--text-primary)'}}>{title}</div> : null}
-          <div className="text-sm" style={{color:'var(--text-primary)'}}>{message}</div>
+          {title ? <div className="font-semibold mb-0.5" style={{ color: 'var(--text-primary)' }}>{title}</div> : null}
+          <div className="text-sm" style={{ color: 'var(--text-primary)' }}>{message}</div>
         </div>
         <button
           onClick={onClose}
           className="ml-2 text-sm opacity-70 hover:opacity-100"
-          style={{color:'var(--text-primary)'}}
+          style={{ color: 'var(--text-primary)' }}
         >
           닫기
         </button>

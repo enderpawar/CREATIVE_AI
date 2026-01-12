@@ -18,7 +18,6 @@ interface GeminiPipelineGeneratorProps {
 const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApplyPipeline, logicId }) => {
     const toast = useToast();
     const [prompt, setPrompt] = useState<string>('');
-    const [, setGeneratedCode] = useState<string>(''); // 향후 코드 표시 기능에 사용
     const [nodeGuide, setNodeGuide] = useState<NodeGuide[]>([]);
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
@@ -38,7 +37,6 @@ const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApp
         }
 
         setIsGenerating(true);
-        setGeneratedCode('');
         setNodeGuide([]);
         
         try {
@@ -66,7 +64,6 @@ const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApp
             
             const enhancedPrompt = prompt + csvInfo;
             const result = await generatePythonCode(enhancedPrompt);
-            setGeneratedCode(result.code);
             setNodeGuide(result.nodeGuide || []);
             toast.success('코드가 생성되었습니다!');
         } catch (error) {
@@ -130,7 +127,7 @@ const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApp
                 </label>
                 <textarea
                     value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
                     placeholder="예: 아이리스 데이터셋으로 꽃의 종류를 분류하는 랜덤 포레스트 모델을 만들어주세요"
                     rows={4}
                     style={{
@@ -220,8 +217,8 @@ const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApp
                         position: 'relative',
                         overflow: 'hidden'
                     }}
-                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#059669')}
-                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#10b981')}
+                    onMouseOver={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#059669')}
+                    onMouseOut={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#10b981')}
                 >
                     🎨 캔버스에 자동 배치하기
                 </button>
