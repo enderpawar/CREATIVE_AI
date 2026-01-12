@@ -220,8 +220,8 @@ const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApp
                         position: 'relative',
                         overflow: 'hidden'
                     }}
-                    onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#059669')}
-                    onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#10b981')}
+                    onMouseOver={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#059669')}
+                    onMouseOut={(e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.backgroundColor = '#10b981')}
                 >
                     🎨 캔버스에 자동 배치하기
                 </button>
