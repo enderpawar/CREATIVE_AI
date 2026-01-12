@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useToast } from './toast/ToastProvider.jsx';
+import { useToast } from './toast/ToastProvider';
 import { useReteAppEditor } from '../hooks/useReteAppEditor';
 import { createNodeByKind, clientToWorld, exportGraph, importGraph, setCurrentLogicId } from '../rete/app-editor';
 import { ClassicPreset } from 'rete';
@@ -8,8 +8,8 @@ import { generatePythonCode, generateJupyterNotebook, generatePythonScript } fro
 import { enhanceCodeWithAI } from '../utils/geminiPipeline';
 import { logger } from '../utils/logger';
 import { saveApiKey, hasApiKey, getApiKey, removeApiKey } from '../utils/apiKeyManager';
-import CSVDataManager from './CSVDataManager.jsx';
-import GeminiPipelineGenerator from './GeminiPipelineGenerator.jsx';
+import CSVDataManager from './CSVDataManager';
+import GeminiPipelineGenerator from './GeminiPipelineGenerator';
 
 // ----------------------------------------------------------------
 // LogicEditorPage: ML 파이프라인을 편집하는 컴포넌트
