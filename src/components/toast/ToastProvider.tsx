@@ -11,7 +11,7 @@ interface ToastProviderProps {
 
 export function ToastProvider({ children }: ToastProviderProps): React.JSX.Element {
   const [toasts, setToasts] = useState<Toast[]>([]);
-  const timersRef = useRef<Map<number, NodeJS.Timeout>>(new Map());
+  const timersRef = useRef<Map<number, number>>(new Map());
 
   const remove = useCallback((id: number) => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
