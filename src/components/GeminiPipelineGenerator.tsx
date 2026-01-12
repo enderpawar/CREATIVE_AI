@@ -18,7 +18,6 @@ interface GeminiPipelineGeneratorProps {
 const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApplyPipeline, logicId }) => {
     const toast = useToast();
     const [prompt, setPrompt] = useState<string>('');
-    const [, setGeneratedCode] = useState<string>(''); // 향후 코드 표시 기능에 사용
     const [nodeGuide, setNodeGuide] = useState<NodeGuide[]>([]);
     const [isGenerating, setIsGenerating] = useState<boolean>(false);
 
@@ -38,7 +37,6 @@ const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApp
         }
 
         setIsGenerating(true);
-        setGeneratedCode('');
         setNodeGuide([]);
         
         try {
@@ -66,7 +64,6 @@ const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApp
             
             const enhancedPrompt = prompt + csvInfo;
             const result = await generatePythonCode(enhancedPrompt);
-            setGeneratedCode(result.code);
             setNodeGuide(result.nodeGuide || []);
             toast.success('코드가 생성되었습니다!');
         } catch (error) {
