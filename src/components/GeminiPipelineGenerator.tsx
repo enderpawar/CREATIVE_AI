@@ -130,7 +130,7 @@ const GeminiPipelineGenerator: React.FC<GeminiPipelineGeneratorProps> = ({ onApp
                 </label>
                 <textarea
                     value={prompt}
-                    onChange={(e) => setPrompt(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setPrompt(e.target.value)}
                     placeholder="예: 아이리스 데이터셋으로 꽃의 종류를 분류하는 랜덤 포레스트 모델을 만들어주세요"
                     rows={4}
                     style={{
