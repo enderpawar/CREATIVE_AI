@@ -33,7 +33,7 @@ export function ToastProvider({ children }: ToastProviderProps): React.JSX.Eleme
       variant: toastObj.variant || 'info',
     };
     setToasts((prev) => [...prev, payload]);
-    const tm = setTimeout(() => remove(id), duration);
+    const tm = setTimeout(() => remove(id), duration) as unknown as number;
     timersRef.current.set(id, tm);
     return id;
   }, [remove]);
