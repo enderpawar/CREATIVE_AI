@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { generatePythonCode } from '../utils/geminiPipeline';
 import { listStoredCSVFiles, getCSVColumns } from '../utils/csvHandler';
-import { useToast } from './toast/ToastProvider.jsx';
+import { useToast } from './toast/ToastProvider';
 import { logger } from '../utils/logger';
 import geminiIcon from '../assets/gemini-color.png';
 
