@@ -59,7 +59,7 @@
 #### 드래그 앤 드롭 정렬
 ![LogicListPage-index change](https://github.com/user-attachments/assets/98b56d2a-2ccc-447b-bd40-30e47e5f1ca6)
 - 파이프라인 카드를 **드래그**하여 원하는 순서로 재배열
-- 직관적인 UI로 프로젝트 구조화가 쉬워집니다
+- 직관적인 UI로 프로젝트 구조화가 쉬워집니다.
 </details>
 
 ---
